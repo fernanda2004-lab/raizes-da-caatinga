@@ -519,13 +519,63 @@ function publicar() {
     SUPABASE_PUBLISHABLE_KEY
   );
 
-  console.log('Supabase conectado!');
+ 
+console.log('Supabase conectado!');
+
+function abrirCadastro() {
+  document.getElementById('modalCadastro').style.display = 'flex';
+}
+
+function fecharCadastro() {
+  document.getElementById('modalCadastro').style.display = 'none';
+}
+
 function abrirLogin() {
   document.getElementById('modalLogin').style.display = 'flex';
 }
 
 function fecharLogin() {
   document.getElementById('modalLogin').style.display = 'none';
+}
+
+async function cadastrarUsuario() {
+  const nome = document.getElementById('cadNome').value.trim();
+  const usuario = document.getElementById('cadUsuario').value.trim();
+  const email = document.getElementById('cadEmail').value.trim();
+  const senha = document.getElementById('cadSenha').value;
+  const mensagem = document.getElementById('cadMensagem');
+
+  if (!nome || !usuario || !email || !senha) {
+    mensagem.textContent = 'Preencha todos os campos!';
+    return;
+  }
+
+  if (senha.length < 6) {
+    mensagem.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+    return;
+  }
+
+  mensagem.textContent = 'Criando sua conta...';
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password: senha,
+    options: {
+      data: {
+        full_name: nome,
+        username: usuario
+      }
+    }
+  });
+
+  if (error) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = error.message;
+    return;
+  }
+
+  mensagem.style.color = '#75df86';
+  mensagem.textContent = 'Cadastro realizado! Verifique seu e-mail.';
 }
 
 async function fazerLogin() {
@@ -543,7 +593,7 @@ async function fazerLogin() {
   mensagem.textContent = 'Entrando...';
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
+    email,
     password: senha
   });
 
@@ -555,9 +605,9 @@ async function fazerLogin() {
 
   mensagem.style.color = '#75df86';
   mensagem.textContent = 'Login realizado com sucesso!';
-
   console.log('Usuário conectado:', data.user);
 }
+
 
 
     
