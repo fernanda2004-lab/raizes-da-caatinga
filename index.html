@@ -473,7 +473,33 @@ a {
     font-size: 11px;
   }
 }
+.menu-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #151512;
+  border: 1px solid #292921;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 18px;
+}
 
+.menu-topo a {
+  color: #f5f5ed;
+  text-decoration: none;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu-topo a:hover,
+.menu-topo a.active {
+  background: #f5c518;
+  color: #090a08;
+}
 </style>
 
 </head>
@@ -526,6 +552,14 @@ a {
   </aside>
 
   <main>
+    <nav class="menu-topo">
+  <a onclick="mostrarSecao('inicio', this)" class="active">🏠 Início</a>
+  <a onclick="mostrarSecao('artigos', this)">📝 Artigos</a>
+  <a onclick="mostrarSecao('videos', this)">🎬 Vídeos</a>
+  <a onclick="mostrarSecao('dicas', this)">💡 Dicas</a>
+  <a onclick="mostrarSecao('meliponarios', this)">🌵 Meliponários</a>
+  <a onclick="mostrarSecao('comunidade', this)">👥 Comunidade</a>
+</nav>
   <div data-secao="inicio">
     <div class="card welcome">
       <h2>Bem-vindo à nossa comunidade! 🐝</h2>
