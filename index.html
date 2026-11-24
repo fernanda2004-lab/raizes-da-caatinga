@@ -522,6 +522,51 @@ function publicar() {
   console.log('Supabase conectado!');
 </script>
 
+
+
+<!-- Janela de cadastro -->
+<div id="modalCadastro" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:#151512;
+    border:1px solid #f5c518;
+    border-radius:15px;
+    padding:25px;
+    width:100%;
+    max-width:400px;
+  ">
+    <h2 style="color:#f5c518;margin-bottom:20px">
+      🐝 Criar sua conta
+    </h2>
+
+    <input id="cadNome" placeholder="Nome completo" style="width:100%;padding:12px;margin-bottom:12px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <input id="cadUsuario" placeholder="Nome de usuário" style="width:100%;padding:12px;margin-bottom:12px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <input id="cadEmail" type="email" placeholder="Seu e-mail" style="width:100%;padding:12px;margin-bottom:12px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <input id="cadSenha" type="password" placeholder="Crie uma senha (mínimo 6 caracteres)" style="width:100%;padding:12px;margin-bottom:15px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <button onclick="cadastrarUsuario()" style="width:100%;padding:13px;background:#f5c518;color:#111;border:0;border-radius:8px;font-weight:bold;cursor:pointer">
+      Criar conta
+    </button>
+
+    <button onclick="fecharCadastro()" style="width:100%;padding:12px;margin-top:10px;background:transparent;color:#aaa;border:0;cursor:pointer">
+      Cancelar
+    </button>
+
+    <p id="cadMensagem" style="margin-top:12px;font-size:13px;text-align:center"></p>
+  </div>
+</div>
+
   
 
 </body>
