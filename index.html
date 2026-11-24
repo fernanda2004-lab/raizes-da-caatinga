@@ -305,7 +305,7 @@ footer {
     <a href="#comunidade">Comunidade</a>
   </nav>
 
-  <div style="display:flex;gap:10px;align-items:center">
+ <div id="areaUsuario" style="display:flex;gap:10px;align-items:center">
   <button class="header-button" onclick="abrirCadastro()">
     Criar conta
   </button>
@@ -615,17 +615,36 @@ await atualizarPerfil();
 
 console.log('Usuário conectado:', data.user);
 }
-  async function atualizarPerfil() {
+ async function atualizarPerfil() {
   const { data: { user } } = await supabaseClient.auth.getUser();
+
   const nomePerfil = document.getElementById('nomePerfil');
+  const areaUsuario = document.getElementById('areaUsuario');
 
-  if (!nomePerfil) return;
+  if (user) {
+    const nome = user.user_metadata?.full_name || user.email;
 
-  nomePerfil.textContent = user
-    ? (user.user_metadata?.full_name || user.email)
-    : 'Visitante';
+    if (nomePerfil) nomePerfil.textContent = nome;
+
+    if (areaUsuario) {
+      areaUsuario.innerHTML = `
+        <span style="color:#f5c518;font-weight:bold;">Olá, ${nome}</span>
+        <button class="header-button" onclick="sairDaConta()">
+          Sair
+        </button>
+      `;
+    }
+  } else {
+    if (nomePerfil) nomePerfil.textContent = 'Visitante';
+
+    if (areaUsuario) {
+      areaUsuario.innerHTML = `
+        <button class="header-button" onclick="abrirCadastro()">Criar conta</button>
+        <button class="header-button" onclick="abrirLogin()" style="background:#292921;color:white">Entrar</button>
+      `;
+    }
+  }
 }
-
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const nomePerfil = document.getElementById('nomePerfil');
   if (!nomePerfil) return;
@@ -637,6 +656,17 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 });
 
 atualizarPerfil();
+
+async function sairDaConta() {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    alert('Erro ao sair: ' + error.message);
+    return;
+  }
+
+  await atualizarPerfil();
+}
 </script>
 
 
