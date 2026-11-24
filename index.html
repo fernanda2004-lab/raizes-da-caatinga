@@ -500,6 +500,39 @@ a {
   background: #f5c518;
   color: #090a08;
 }
+  @media (max-width: 700px) {
+  .container {
+    display: block;
+    width: 100%;
+    margin: 12px auto;
+    padding: 0 12px;
+  }
+
+  .left-sidebar,
+  .right-sidebar {
+    display: none !important;
+  }
+
+  main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .menu-topo {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .menu-topo a {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 9px 11px;
+  }
+}
 </style>
 
 </head>
