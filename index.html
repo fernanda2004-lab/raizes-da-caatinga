@@ -697,10 +697,80 @@ Vamos fortalecer a meliponicultura brasileira! 💛
     </section>
     </div>
 
-    <section id="artigos" data-secao="artigos" class="card" style="display:none">
-      <h3 class="side-title">📝 Artigos</h3>
-      <p class="post-content">Conhecimento, manejo e experiências sobre abelhas nativas. Em breve, uma biblioteca completa de artigos.</p>
-    </section>
+   
+<section id="artigos" data-secao="artigos" class="card" style="display:none">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px">
+    <div>
+      <h2 style="color:#f5c518;font-size:22px">📝 Biblioteca de Artigos</h2>
+      <p style="color:#a3a696;font-size:13px;margin-top:6px">
+        Conhecimento e experiências sobre as abelhas nativas sem ferrão.
+      </p>
+    </div>
+
+    <button class="header-button" onclick="abrirEditorArtigo()">
+      ✍️ Publicar artigo
+    </button>
+  </div>
+
+  <div style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:22px;margin-bottom:22px">
+    <h3 style="color:#f5f5ed;font-size:16px">🌱 Compartilhe seu conhecimento</h3>
+    <p style="color:#a3a696;font-size:13px;margin-top:8px;line-height:1.6">
+      Publique artigos sobre manejo, espécies, alimentação, multiplicação de colônias, conservação e suas experiências na meliponicultura.
+    </p>
+  </div>
+
+  <h3 style="color:#f5c518;font-size:16px;margin-bottom:15px">
+    📚 Artigos publicados
+  </h3>
+
+  <div id="lista-artigos">
+    <div style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:25px;text-align:center">
+      <div style="font-size:38px">📖</div>
+      <strong style="display:block;color:#f5f5ed;margin-top:10px">
+        Nenhum artigo publicado ainda
+      </strong>
+      <p style="color:#a3a696;font-size:13px;margin-top:7px">
+        Seja o primeiro a compartilhar conhecimento com a comunidade!
+      </p>
+    </div>
+  </div>
+
+</section>
+    <div id="modalArtigo" style="display:none;position:fixed;inset:0;background:#000c;z-index:9999;align-items:center;justify-content:center;padding:15px">
+
+  <div style="background:#141610;border:1px solid #292d20;border-radius:15px;padding:22px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="color:#f5c518">✍️ Novo artigo</h2>
+      <button onclick="fecharEditorArtigo()" style="background:none;border:none;color:white;font-size:25px;cursor:pointer">×</button>
+    </div>
+
+    <label style="color:#f5f5ed">Título do artigo</label>
+    <input id="artigoTitulo" type="text" placeholder="Digite o título..." style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
+
+    <label style="color:#f5f5ed">Categoria</label>
+    <select id="artigoCategoria" style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
+      <option value="Manejo">Manejo</option>
+      <option value="Espécies">Espécies</option>
+      <option value="Alimentação">Alimentação</option>
+      <option value="Multiplicação">Multiplicação</option>
+      <option value="Conservação">Conservação</option>
+      <option value="Experiências">Experiências</option>
+    </select>
+
+    <label style="color:#f5f5ed">Conteúdo do artigo</label>
+    <textarea id="artigoConteudo" rows="9" placeholder="Escreva seu artigo aqui..." style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white;resize:vertical"></textarea>
+
+    <button onclick="publicarArtigo()" class="header-button" style="width:100%;padding:13px">
+      🐝 Publicar artigo
+    </button>
+
+    <p id="artigoMensagem" style="margin-top:12px;text-align:center;color:#f5c518"></p>
+
+  </div>
+</div>
+
 
     
 <section id="videos" data-secao="videos" class="card" style="display:none">
@@ -930,7 +1000,18 @@ function abrirLogin() {
 function fecharLogin() {
   document.getElementById('modalLogin').style.display = 'none';
 }
+function abrirEditorArtigo() {
+  const modal = document.getElementById('modalArtigo');
+  modal.style.display = 'flex';
+}
 
+function fecharEditorArtigo() {
+  document.getElementById('modalArtigo').style.display = 'none';
+}
+
+
+
+  
 async function cadastrarUsuario() {
   const nome = document.getElementById('cadNome').value.trim();
   const usuario = document.getElementById('cadUsuario').value.trim();
