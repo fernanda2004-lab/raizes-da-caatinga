@@ -507,19 +507,20 @@ function publicar() {
 </script>
 
 
+
+
 <!-- Conexão com Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const SUPABASE_URL = 'https://olkuxqbqiuliekfprtuo.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_cSXN_29Ff0t1EciP2Sr7yA_bjDKRSxP';
+const SUPABASE_URL = 'https://olkuxqbqiuliekfprtuo.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_cSXN_29Ff0t1EciP2Sr7yA_bjDKRSxP';
 
-  window.supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
+window.supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
- 
 console.log('Supabase conectado!');
 
 function abrirCadastro() {
@@ -544,6 +545,8 @@ async function cadastrarUsuario() {
   const email = document.getElementById('cadEmail').value.trim();
   const senha = document.getElementById('cadSenha').value;
   const mensagem = document.getElementById('cadMensagem');
+
+  mensagem.style.color = '#f5c518';
 
   if (!nome || !usuario || !email || !senha) {
     mensagem.textContent = 'Preencha todos os campos!';
@@ -576,6 +579,7 @@ async function cadastrarUsuario() {
 
   mensagem.style.color = '#75df86';
   mensagem.textContent = 'Cadastro realizado! Verifique seu e-mail.';
+  console.log('Usuário cadastrado:', data.user);
 }
 
 async function fazerLogin() {
@@ -606,60 +610,6 @@ async function fazerLogin() {
   mensagem.style.color = '#75df86';
   mensagem.textContent = 'Login realizado com sucesso!';
   console.log('Usuário conectado:', data.user);
-}
-
-
-
-    
-  document.getElementById('modalCadastro').style.display = 'flex';
-}
-
-function fecharCadastro() {
-  document.getElementById('modalCadastro').style.display = 'none';
-}
-
-async function cadastrarUsuario() {
-  const nome = document.getElementById('cadNome').value.trim();
-  const usuario = document.getElementById('cadUsuario').value.trim();
-  const email = document.getElementById('cadEmail').value.trim();
-  const senha = document.getElementById('cadSenha').value;
-  const mensagem = document.getElementById('cadMensagem');
-
-  mensagem.style.color = '#f5c518';
-
-  if (!nome || !usuario || !email || !senha) {
-    mensagem.textContent = 'Preencha todos os campos!';
-    return;
-  }
-
-  if (senha.length < 6) {
-    mensagem.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
-    return;
-  }
-
-  mensagem.textContent = 'Criando sua conta...';
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email: email,
-    password: senha,
-    options: {
-      data: {
-        full_name: nome,
-        username: usuario
-      }
-    }
-  });
-
-  if (error) {
-    mensagem.style.color = '#ff6464';
-    mensagem.textContent = error.message;
-    return;
-  }
-
-  mensagem.style.color = '#75df86';
-  mensagem.textContent = 'Cadastro realizado! Verifique seu e-mail para confirmar a conta.';
-
-  console.log('Usuário cadastrado:', data.user);
 }
 </script>
 
