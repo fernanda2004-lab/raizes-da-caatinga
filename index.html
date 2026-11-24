@@ -362,49 +362,118 @@ a {
   }
 }
 
+
 @media(max-width: 700px) {
   header {
-    padding: 10px 15px;
+    padding: 10px;
     min-height: 62px;
+    flex-wrap: wrap;
   }
 
   header nav {
-    display: none;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  header nav a {
+    font-size: 11px;
   }
 
   .logo h1 {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .logo-icon {
-    width: 37px;
-    height: 37px;
+    width: 34px;
+    height: 34px;
   }
 
   .header-button {
-    padding: 9px 11px;
-    font-size: 12px;
+    padding: 8px;
+    font-size: 11px;
   }
 
   .container {
+    display: grid;
+    grid-template-columns: 115px minmax(0, 1fr);
+    gap: 9px;
+    margin: 12px auto;
+    padding: 0 8px;
+  }
+
+  .left-sidebar {
     display: block;
-    margin: 18px auto;
-    padding: 0 12px;
+    min-width: 0;
+  }
+
+  .right-sidebar {
+    display: none;
   }
 
   .card {
-    padding: 15px;
-    border-radius: 13px;
+    padding: 10px;
+    border-radius: 11px;
+    min-width: 0;
+  }
+
+  .profile-cover {
+    height: 45px;
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    margin-top: -38px;
+  }
+
+  .profile h3 {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .profile p {
+    font-size: 10px;
+  }
+
+  .menu li {
+    padding: 10px 5px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
   }
 
   .welcome h2 {
-    font-size: 19px;
+    font-size: 16px;
+  }
+
+  .welcome p,
+  .post-content {
+    font-size: 12px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .composer textarea {
+    font-size: 12px;
+  }
+
+  .composer-bottom {
+    flex-wrap: wrap;
   }
 
   .post-actions {
-    gap: 15px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .post-actions button {
+    font-size: 11px;
   }
 }
+
 </style>
 
 </head>
