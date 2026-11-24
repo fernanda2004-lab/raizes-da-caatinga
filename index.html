@@ -608,9 +608,12 @@ async function fazerLogin() {
   }
 
   mensagem.style.color = '#75df86';
-  mensagem.textContent = 'Login realizado com sucesso!';
-  console.log('Usuário conectado:', data.user);
-  await atualizarPerfil();
+mensagem.textContent = 'Login realizado com sucesso!';
+
+fecharLogin();
+await atualizarPerfil();
+
+console.log('Usuário conectado:', data.user);
 }
   async function atualizarPerfil() {
   const { data: { user } } = await supabaseClient.auth.getUser();
