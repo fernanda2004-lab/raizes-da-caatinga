@@ -533,6 +533,46 @@ a {
     padding: 9px 11px;
   }
 }
+  @media (max-width: 700px) {
+  header nav {
+    display: none !important;
+  }
+
+  .left-sidebar,
+  .right-sidebar {
+    display: none !important;
+  }
+
+  .container {
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 12px auto;
+    padding: 0 12px;
+  }
+
+  main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .menu-topo {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+  }
+
+  .menu-topo a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 9px 12px;
+  }
+}
 </style>
 
 </head>
