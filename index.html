@@ -1140,6 +1140,57 @@ async function sairDaConta() {
 
   await atualizarPerfil();
 }
+  
+async function publicarArtigo() {
+  const mensagem = document.getElementById('artigoMensagem');
+  const titulo = document.getElementById('artigoTitulo').value.trim();
+  const categoria = document.getElementById('artigoCategoria').value;
+  const conteudo = document.getElementById('artigoConteudo').value.trim();
+
+  if (!titulo || !conteudo) {
+    mensagem.textContent = 'Preencha o título e o conteúdo!';
+    return;
+  }
+
+  const { data: { user }, error: erroUsuario } =
+    await supabaseClient.auth.getUser();
+
+  if (erroUsuario || !user) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = 'Entre na sua conta para publicar!';
+    return;
+  }
+
+  mensagem.style.color = '#f5c518';
+  mensagem.textContent = 'Publicando artigo...';
+
+  const { error } = await supabaseClient
+    .from('articles')
+    .insert({
+      user_id: user.id,
+      title: titulo,
+      category: categoria,
+      content: conteudo
+    });
+
+  if (error) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = 'Erro: ' + error.message;
+    return;
+  }
+
+  mensagem.style.color = '#75df86';
+  mensagem.textContent = 'Artigo publicado com sucesso!';
+
+  document.getElementById('artigoTitulo').value = '';
+  document.getElementById('artigoConteudo').value = '';
+
+  setTimeout(() => {
+    fecharEditorArtigo();
+    mensagem.textContent = '';
+  }, 1200);
+}
+
 </script>
 
 
