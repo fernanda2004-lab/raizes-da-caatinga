@@ -1141,6 +1141,7 @@ async function sairDaConta() {
   await atualizarPerfil();
 }
   
+
 async function publicarArtigo() {
   const mensagem = document.getElementById('artigoMensagem');
   const titulo = document.getElementById('artigoTitulo').value.trim();
@@ -1179,6 +1180,8 @@ async function publicarArtigo() {
     return;
   }
 
+  await carregarArtigos();
+
   mensagem.style.color = '#75df86';
   mensagem.textContent = 'Artigo publicado com sucesso!';
 
@@ -1190,6 +1193,49 @@ async function publicarArtigo() {
     mensagem.textContent = '';
   }, 1200);
 }
+
+async function carregarArtigos() {
+  const lista = document.getElementById('lista-artigos');
+
+  const { data: artigos, error } = await supabaseClient
+    .from('articles')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    lista.textContent = 'Não foi possível carregar os artigos.';
+    console.error(error);
+    return;
+  }
+
+  if (!artigos || artigos.length === 0) {
+    lista.innerHTML = '<p style="color:#a3a696;text-align:center;padding:25px">📖 Nenhum artigo publicado ainda. Seja o primeiro!</p>';
+    return;
+  }
+
+  lista.innerHTML = artigos.map(artigo => {
+    const escapar = texto => String(texto || '').replace(/[&<>"']/g, caractere => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[caractere]);
+
+    return `
+      <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:18px;margin-bottom:14px">
+        <span style="color:#f5c518;font-size:12px">🌱 ${escapar(artigo.category)}</span>
+        <h3 style="color:#f5f5ed;margin:10px 0">${escapar(artigo.title)}</h3>
+        <p style="color:#a3a696;font-size:12px;margin-bottom:12px">
+          ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
+        </p>
+        <p style="color:#f5f5ed;line-height:1.7;white-space:pre-wrap">${escapar(artigo.content)}</p>
+      </article>
+    `;
+  }).join('');
+}
+
+carregarArtigos();
 
 </script>
 
