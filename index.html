@@ -799,17 +799,22 @@ function curtir(botao) {
   botao.textContent = ativo ? "♥ Curtido" : "♡ Curtir";
 }
 
+
 function mostrarSecao(secao, item) {
-  document.querySelectorAll(".menu li").forEach(menu => {
+  // Remove a seleção de todos os botões
+  document.querySelectorAll(".menu li, .menu-topo a").forEach(menu => {
     menu.classList.remove("active");
   });
 
+  // Ativa somente o botão clicado
   item.classList.add("active");
 
+  // Esconde todas as seções
   document.querySelectorAll("[data-secao]").forEach(area => {
     area.style.display = "none";
   });
 
+  // Mostra a seção escolhida
   const destino = document.querySelector('[data-secao="' + secao + '"]');
 
   if (destino) {
