@@ -305,9 +305,15 @@ footer {
     <a href="#comunidade">Comunidade</a>
   </nav>
 
-  <button class="header-button" onclick="document.getElementById('publicar').scrollIntoView({behavior:'smooth'})">
-    + Publicar
+  <div style="display:flex;gap:10px;align-items:center">
+  <button class="header-button" onclick="abrirCadastro()">
+    Criar conta
   </button>
+
+  <button class="header-button" onclick="abrirLogin()" style="background:#292921;color:white">
+    Entrar
+  </button>
+</div>
 </header>
 
 <div class="container">
