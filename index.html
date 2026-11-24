@@ -7,287 +7,410 @@
 <meta name="theme-color" content="#0b0b09">
 <title>Raízes da Caatinga | Comunidade</title>
 
+
 <style>
 :root {
-  --bg: #0b0b09;
-  --panel: #151512;
-  --panel2: #1d1d18;
+  --bg: #090a08;
+  --panel: #141610;
+  --panel2: #1c2017;
   --yellow: #f5c518;
   --text: #f5f5ed;
-  --muted: #99998c;
-  --border: #292921;
+  --muted: #a3a696;
+  --border: #292d20;
 }
 
-* {box-sizing:border-box;margin:0;padding:0}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
 }
 
 header {
-  height:70px;
-  background:#10100d;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 6%;
-  position:sticky;
-  top:0;
-  z-index:10;
+  min-height: 72px;
+  background: #10120d;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 30px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 15px;
 }
 
 .logo {
-  display:flex;
-  align-items:center;
-  gap:11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
 }
 
 .logo-icon {
-  width:42px;
-  height:42px;
-  border-radius:12px;
-  background:var(--yellow);
-  color:#111;
-  display:grid;
-  place-items:center;
-  font-size:24px;
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  background: var(--yellow);
+  color: #111;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
 }
 
-.logo h1 {font-size:17px}
-.logo span {color:var(--yellow)}
+.logo h1 {
+  font-size: 17px;
+}
+
+.logo span {
+  color: var(--yellow);
+}
 
 header nav {
-  display:flex;
-  gap:25px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 header nav a {
-  color:var(--muted);
-  text-decoration:none;
-  font-size:14px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  transition: .2s;
 }
 
-header nav a:hover {color:var(--yellow)}
+header nav a:hover {
+  color: var(--yellow);
+}
 
 .header-button {
-  background:var(--yellow);
-  color:#111;
-  border:0;
-  padding:11px 17px;
-  border-radius:9px;
-  font-weight:bold;
-  cursor:pointer;
+  background: var(--yellow);
+  color: #111;
+  border: 0;
+  padding: 11px 17px;
+  border-radius: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.header-button:hover,
+.post-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .container {
-  max-width:1250px;
-  margin:30px auto;
-  padding:0 20px;
-  display:grid;
-  grid-template-columns:240px minmax(0,1fr) 260px;
-  gap:22px;
+  max-width: 1350px;
+  margin: 30px auto;
+  padding: 0 22px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 270px;
+  gap: 22px;
+  align-items: start;
 }
 
 .card {
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:13px;
-  padding:19px;
-  margin-bottom:17px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 25px rgba(0,0,0,.15);
 }
 
 .profile-cover {
-  height:75px;
-  background:linear-gradient(120deg,#594500,#d4a900,#28200a);
-  border-radius:9px;
-  margin-bottom:35px;
+  height: 85px;
+  background: linear-gradient(120deg,#594500,#d4a900,#28200a);
+  border-radius: 11px;
+  margin-bottom: 38px;
 }
 
 .avatar {
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:var(--yellow);
-  color:#111;
-  display:grid;
-  place-items:center;
-  font-size:27px;
-  border:4px solid var(--panel);
-  margin-top:-65px;
-  position:relative;
-  margin-bottom:10px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: #111;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  border: 4px solid var(--panel);
+  margin-top: -70px;
+  position: relative;
+  margin-bottom: 12px;
 }
 
-.profile h3 {font-size:16px}
-.profile p {color:var(--muted);font-size:12px;margin-top:7px;line-height:1.5}
+.profile h3 {
+  font-size: 16px;
+}
+
+.profile p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 7px;
+  line-height: 1.6;
+}
 
 .menu {
-  list-style:none;
-  margin-top:18px;
+  list-style: none;
+  margin-top: 20px;
 }
 
 .menu li {
-  padding:12px 8px;
-  border-radius:8px;
-  color:#c5c5b9;
-  cursor:pointer;
-  font-size:14px;
+  padding: 12px;
+  border-radius: 9px;
+  color: #c5c5b9;
+  cursor: pointer;
+  font-size: 14px;
+  transition: .2s;
 }
 
-.menu li:hover,.menu li.active {
-  background:#292410;
-  color:var(--yellow);
+.menu li:hover,
+.menu li.active {
+  background: #292410;
+  color: var(--yellow);
 }
 
 .section-title {
-  font-size:18px;
-  margin-bottom:17px;
+  font-size: 19px;
+  margin-bottom: 17px;
 }
 
 .composer textarea {
-  width:100%;
-  min-height:85px;
-  resize:vertical;
-  background:var(--panel2);
-  color:white;
-  border:1px solid var(--border);
-  border-radius:9px;
-  padding:13px;
-  font:inherit;
-  outline:none;
+  width: 100%;
+  min-height: 95px;
+  resize: vertical;
+  background: var(--panel2);
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 14px;
+  font: inherit;
+  outline: none;
 }
 
-.composer textarea:focus {border-color:var(--yellow)}
+.composer textarea:focus {
+  border-color: var(--yellow);
+}
 
 .composer-bottom {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-top:13px;
-  gap:10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 13px;
+  gap: 10px;
 }
 
-.composer-bottom span {color:var(--muted);font-size:12px}
+.composer-bottom span {
+  color: var(--muted);
+  font-size: 12px;
+}
 
 .post-button {
-  background:var(--yellow);
-  color:#111;
-  border:0;
-  border-radius:8px;
-  padding:11px 18px;
-  font-weight:bold;
-  cursor:pointer;
+  background: var(--yellow);
+  color: #111;
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 19px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s;
 }
 
 .post-header {
-  display:flex;
-  align-items:center;
-  gap:11px;
-  margin-bottom:15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
 }
 
 .post-avatar {
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  background:#39321a;
-  display:grid;
-  place-items:center;
-  color:var(--yellow);
-  font-size:19px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #39321a;
+  display: grid;
+  place-items: center;
+  color: var(--yellow);
+  font-size: 20px;
 }
 
-.post-header strong {font-size:14px}
-.post-header small {display:block;color:var(--muted);margin-top:4px;font-size:11px}
+.post-header strong {
+  font-size: 14px;
+}
+
+.post-header small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 11px;
+}
 
 .post-content {
-  color:#deded4;
-  font-size:14px;
-  line-height:1.7;
-  white-space:pre-wrap;
+  color: #deded4;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .post-tag {
-  display:inline-block;
-  background:#30280e;
-  color:var(--yellow);
-  padding:6px 10px;
-  border-radius:20px;
-  font-size:11px;
-  margin-top:13px;
+  display: inline-block;
+  background: #30280e;
+  color: var(--yellow);
+  padding: 6px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  margin-top: 13px;
 }
 
 .post-actions {
-  border-top:1px solid var(--border);
-  margin-top:16px;
-  padding-top:13px;
-  display:flex;
-  gap:20px;
+  border-top: 1px solid var(--border);
+  margin-top: 17px;
+  padding-top: 14px;
+  display: flex;
+  gap: 22px;
 }
 
 .post-actions button {
-  background:none;
-  border:0;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:13px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition: .2s;
 }
 
-.post-actions button:hover,.post-actions button.liked {
-  color:var(--yellow);
+.post-actions button:hover,
+.post-actions button.liked {
+  color: var(--yellow);
 }
 
-.side-title {font-size:14px;margin-bottom:15px}
+.side-title {
+  font-size: 14px;
+  margin-bottom: 15px;
+}
 
 .topic {
-  padding:11px 0;
-  border-bottom:1px solid var(--border);
-  font-size:13px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
 }
 
-.topic:last-child {border:0}
-.topic strong {display:block}
-.topic small {color:var(--muted);display:block;margin-top:5px}
+.topic:last-child {
+  border: 0;
+}
+
+.topic strong {
+  display: block;
+}
+
+.topic small {
+  color: var(--muted);
+  display: block;
+  margin-top: 5px;
+}
 
 .welcome {
-  background:linear-gradient(120deg,#25200c,#17150e);
-  border:1px solid #4b3d13;
+  background: linear-gradient(120deg,#25200c,#17150e);
+  border: 1px solid #4b3d13;
 }
 
-.welcome h2 {color:var(--yellow);font-size:20px;margin-bottom:10px}
-.welcome p {font-size:13px;color:#d0cbb8;line-height:1.7}
+.welcome h2 {
+  color: var(--yellow);
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.welcome p {
+  font-size: 14px;
+  color: #d0cbb8;
+  line-height: 1.8;
+}
 
 footer {
-  text-align:center;
-  padding:30px 15px;
-  color:var(--muted);
-  font-size:12px;
-  border-top:1px solid var(--border);
+  text-align: center;
+  padding: 30px 15px;
+  color: var(--muted);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 30px;
 }
 
-@media(max-width:950px) {
-  .container {grid-template-columns:210px minmax(0,1fr)}
-  .right-sidebar {display:none}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
-@media(max-width:650px) {
-  header {padding:0 15px;height:62px}
-  header nav {display:none}
-  .logo h1 {font-size:14px}
-  .logo-icon {width:37px;height:37px}
-  .header-button {padding:9px 11px;font-size:12px}
+@media(max-width: 1050px) {
   .container {
-    display:block;
-    margin:18px auto;
-    padding:0 12px;
+    grid-template-columns: 220px minmax(0,1fr);
   }
-  .left-sidebar {display:none}
-  .card {padding:15px}
+
+  .right-sidebar {
+    display: none;
+  }
+}
+
+@media(max-width: 700px) {
+  header {
+    padding: 10px 15px;
+    min-height: 62px;
+  }
+
+  header nav {
+    display: none;
+  }
+
+  .logo h1 {
+    font-size: 14px;
+  }
+
+  .logo-icon {
+    width: 37px;
+    height: 37px;
+  }
+
+  .header-button {
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+
+  .container {
+    display: block;
+    margin: 18px auto;
+    padding: 0 12px;
+  }
+
+  .left-sidebar {
+    display: none;
+  }
+
+  .card {
+    padding: 15px;
+    border-radius: 13px;
+  }
+
+  .welcome h2 {
+    font-size: 19px;
+  }
+
+  .post-actions {
+    gap: 15px;
+  }
 }
 </style>
+
 </head>
 
 <body>
