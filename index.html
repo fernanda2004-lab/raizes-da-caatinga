@@ -611,6 +611,28 @@ async function fazerLogin() {
   mensagem.textContent = 'Login realizado com sucesso!';
   console.log('Usuário conectado:', data.user);
 }
+  async function atualizarPerfil() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const nomePerfil = document.getElementById('nomePerfil');
+
+  if (!nomePerfil) return;
+
+  nomePerfil.textContent = user
+    ? (user.user_metadata?.full_name || user.email)
+    : 'Visitante';
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  const nomePerfil = document.getElementById('nomePerfil');
+  if (!nomePerfil) return;
+
+  const user = session?.user;
+  nomePerfil.textContent = user
+    ? (user.user_metadata?.full_name || user.email)
+    : 'Visitante';
+});
+
+atualizarPerfil();
 </script>
 
 
