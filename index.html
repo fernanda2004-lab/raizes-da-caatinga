@@ -573,6 +573,21 @@ a {
     padding: 9px 12px;
   }
 }
+  /* Remover menus antigos */
+header nav,
+.left-sidebar {
+  display: none !important;
+}
+
+/* Manter o conteúdo centralizado */
+.container {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* Nova navegação */
+.menu-topo {
+  display: flex;
+}
 </style>
 
 </head>
