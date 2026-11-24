@@ -521,6 +521,47 @@ function publicar() {
 
   console.log('Supabase conectado!');
   function abrirCadastro() {
+function abrirLogin() {
+  document.getElementById('modalLogin').style.display = 'flex';
+}
+
+function fecharLogin() {
+  document.getElementById('modalLogin').style.display = 'none';
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const mensagem = document.getElementById('loginMensagem');
+
+  if (!email || !senha) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = 'Preencha seu e-mail e sua senha!';
+    return;
+  }
+
+  mensagem.style.color = '#f5c518';
+  mensagem.textContent = 'Entrando...';
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: senha
+  });
+
+  if (error) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = error.message;
+    return;
+  }
+
+  mensagem.style.color = '#75df86';
+  mensagem.textContent = 'Login realizado com sucesso!';
+
+  console.log('Usuário conectado:', data.user);
+}
+
+
+    
   document.getElementById('modalCadastro').style.display = 'flex';
 }
 
@@ -615,6 +656,50 @@ async function cadastrarUsuario() {
     </button>
 
     <p id="cadMensagem" style="margin-top:12px;font-size:13px;text-align:center"></p>
+  </div>
+</div>
+
+
+<!-- Janela de login -->
+<div id="modalLogin" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:10000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:#151512;
+    border:1px solid #f5c518;
+    border-radius:15px;
+    padding:25px;
+    width:100%;
+    max-width:400px;
+  ">
+    <h2 style="color:#f5c518;margin-bottom:20px">
+      🐝 Entrar na comunidade
+    </h2>
+
+    <input id="loginEmail" type="email" placeholder="Seu e-mail"
+      style="width:100%;padding:12px;margin-bottom:12px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <input id="loginSenha" type="password" placeholder="Sua senha"
+      style="width:100%;padding:12px;margin-bottom:15px;border-radius:8px;background:#1d1d18;color:white;border:1px solid #292921">
+
+    <button onclick="fazerLogin()"
+      style="width:100%;padding:13px;background:#f5c518;color:#111;border:0;border-radius:8px;font-weight:bold;cursor:pointer">
+      Entrar
+    </button>
+
+    <button onclick="fecharLogin()"
+      style="width:100%;padding:12px;margin-top:10px;background:transparent;color:#aaa;border:0;cursor:pointer">
+      Cancelar
+    </button>
+
+    <p id="loginMensagem" style="margin-top:12px;font-size:13px;text-align:center"></p>
   </div>
 </div>
 
