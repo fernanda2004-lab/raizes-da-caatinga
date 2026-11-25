@@ -1128,6 +1128,19 @@ async function comprimirVideo(arquivo, aoProgredir) {
     let gravador;
     let partes = [];
     let animacao;
+    let cancelada = false;
+window.cancelarCompressaoVideo = function() {
+  cancelada = true;
+
+  if (gravador && gravador.state !== 'inactive') {
+    gravador.stop();
+  }
+
+  limpar();
+};
+
+
+    
 
     video.src = url;
     video.preload = 'auto';
@@ -1193,14 +1206,19 @@ async function comprimirVideo(arquivo, aoProgredir) {
           reject(new Error('Falha durante a compressão.'));
         };
 
-        gravador.onstop = () => {
-          limpar();
+       gravador.onstop = () => {
+  limpar();
 
-          const comprimido = new File(
-            partes,
-            arquivo.name.replace(/\.[^.]+$/, '') + '.webm',
-            { type: 'video/webm' }
-          );
+  if (cancelada) {
+    reject(new Error('Compressão cancelada.'));
+    return;
+  }
+
+  const comprimido = new File(
+    partes,
+    arquivo.name.replace(/\.[^.]+$/, '') + '.webm',
+    { type: 'video/webm' }
+  );
 
           if (comprimido.size >= arquivo.size) {
             reject(new Error('Não foi possível reduzir o tamanho deste vídeo. Tente outro arquivo.'));
@@ -1247,6 +1265,20 @@ let cancelamentoManualVideo = false;
 let envioVideoAtual = null;
 function cancelarEnvioVideo() {
  cancelamentoManualVideo = true;
+    if (!envioVideoAtual && window.cancelarCompressaoVideo) {
+   window.cancelarCompressaoVideo();
+
+  document.getElementById('botaoCancelarVideo').style.display = 'none';
+  document.getElementById('areaProgressoVideo').style.display = 'none';
+
+  document.getElementById('barraProgressoVideo').style.width = '0%';
+  document.getElementById('porcentagemVideo').textContent = '0%';
+
+  document.getElementById('videoMensagem').textContent = 'Preparação cancelada.';
+  document.getElementById('textoProgressoVideo').textContent = 'Cancelado';
+
+  return;
+  }
   if (envioVideoAtual) {
     envioVideoAtual.abort();
 
@@ -1308,6 +1340,7 @@ async function publicarVideo() {
     if (arquivo.size > 45 * 1024 * 1024) {
       mensagem.style.color = '#f5c518';
       mensagem.textContent = 'Preparando compressão do vídeo...';
+      document.getElementById('botaoCancelarVideo').style.display = 'block';
       textoProgresso.textContent = 'Comprimindo vídeo...';
 
       arquivo = await comprimirVideo(arquivo, progresso => {
@@ -1420,11 +1453,18 @@ async function publicarVideo() {
 
   upload.start();
 
-  } catch (erro) {
-    mensagem.style.color = '#ff6464';
-    mensagem.textContent = erro.message;
-    textoProgresso.textContent = 'Não foi possível preparar o vídeo';
+ } catch (erro) {
+  if (cancelamentoManualVideo) {
+    cancelamentoManualVideo = false;
+    mensagem.style.color = '#f5c518';
+    mensagem.textContent = 'Preparação cancelada.';
+    textoProgresso.textContent = 'Cancelado';
+    return;
   }
+
+  mensagem.style.color = '#ff6464';
+  mensagem.textContent = erro.message;
+  textoProgresso.textContent = 'Não foi possível preparar o vídeo';
 }
 async function carregarVideos() {
   const lista = document.getElementById('lista-videos');
