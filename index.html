@@ -1466,7 +1466,8 @@ async function publicarVideo() {
     textoProgresso.textContent = 'Não foi possível preparar o vídeo';
   }
 }
-  async function carregarVideos() {
+ 
+async function carregarVideos() {
   const lista = document.getElementById('lista-videos');
 
   const { data: videos, error } = await supabaseClient
@@ -1479,6 +1480,7 @@ async function publicarVideo() {
     console.error(error);
     return;
   }
+
   if (!videos || videos.length === 0) {
     lista.innerHTML = `
       <p style="color:#a3a696;text-align:center;padding:25px">
@@ -1488,6 +1490,15 @@ async function publicarVideo() {
     return;
   }
 
+  const idsUsuarios = [...new Set(videos.map(video => video.user_id))];
+
+  const { data: perfis, error: erroPerfis } = await supabaseClient
+    .from('profiles')
+    .select('id, full_name, username')
+    .in('id', idsUsuarios);
+
+  if (erroPerfis) console.error(erroPerfis);
+
   const escapar = texto => String(texto || '').replace(/[&<>"']/g, caractere => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -1496,34 +1507,50 @@ async function publicarVideo() {
     "'": '&#39;'
   })[caractere]);
 
-  lista.innerHTML = videos.map(video => `
-    <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:15px;overflow:hidden">
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-      <video controls playsinline preload="metadata"
-        style="width:100%;border-radius:9px;background:#000;max-height:280px">
-        <source src="${escapar(video.video_url)}">
-        Seu navegador não suporta vídeos.
-      </video>
+  lista.innerHTML = videos.map(video => {
+    const perfil = (perfis || []).find(p => p.id === video.user_id);
+    const nomeAutor = perfil?.full_name || perfil?.username || 'Membro';
+    const souAutor = user && user.id === video.user_id;
 
-      <h3 style="color:#f5c518;margin:12px 0 7px">
-        ${escapar(video.title)}
-      </h3>
+    return `
+      <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:15px;overflow:hidden">
 
-      <p style="color:#a3a696;font-size:13px;line-height:1.6">
-        ${escapar(video.description)}
-      </p>
+        <video controls playsinline preload="metadata"
+          style="width:100%;border-radius:9px;background:#000;max-height:280px">
+          <source src="${escapar(video.video_url)}">
+          Seu navegador não suporta vídeos.
+        </video>
 
-      <p style="color:#888;font-size:11px;margin-top:12px">
-        📅 ${new Date(video.created_at).toLocaleDateString('pt-BR')}
-      </p>
+        <h3 style="color:#f5c518;margin:12px 0 7px">
+          ${escapar(video.title)}
+        </h3>
 
-    </article>
-  `).join('');
+        <p style="color:#a3a696;font-size:13px;line-height:1.6">
+          ${escapar(video.description)}
+        </p>
+
+        <p style="color:#f5c518;font-size:12px;margin-top:12px">
+          👤 Publicado por: ${escapar(nomeAutor)}
+        </p>
+
+        <p style="color:#888;font-size:11px;margin-top:8px">
+          📅 ${new Date(video.created_at).toLocaleDateString('pt-BR')}
+        </p>
+
+        ${souAutor ? `
+          <button onclick="editarVideo('${video.id}')" class="header-button" style="margin-top:12px">
+            ✏️ Editar vídeo
+          </button>
+        ` : ''}
+
+      </article>
+    `;
+  }).join('');
 }
 
 carregarVideos();
-
-
 
   
 async function cadastrarUsuario() {
