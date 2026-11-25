@@ -1867,8 +1867,8 @@ async function atualizarPerfil() {
                  user.email;
 
     const foto = perfil?.avatar_url ||
-                 user.user_metadata?.avatar_url ||
-                 '';
+  user.user_metadata?.avatar_url ||
+  'https://cdn-icons-png.flaticon.com/512/616/616490.png';
 
     if (nomePerfil) nomePerfil.textContent = nome;
 
