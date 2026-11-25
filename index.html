@@ -1073,60 +1073,85 @@ function compartilhar() {
   }
 }
 
-function publicar() {
-  const campo = document.getElementById("texto");
-  const texto = campo.value.trim();
 
-  if (!texto) {
-    alert("Escreva algo antes de publicar!");
+async function carregarPosts() {
+  const lista = document.getElementById('novas-publicacoes');
+
+  const { data: posts, error } = await supabaseClient
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    lista.textContent = 'Não foi possível carregar as publicações.';
     return;
   }
 
-  const artigo = document.createElement("article");
-  artigo.className = "card";
+  lista.innerHTML = '';
 
-  const cabecalho = document.createElement("div");
-  cabecalho.className = "post-header";
+  if (!posts || posts.length === 0) {
+    lista.innerHTML = `
+      <p style="color:#a3a696;text-align:center;padding:20px">
+        🐝 Nenhuma publicação ainda. Seja o primeiro!
+      </p>
+    `;
+    return;
+  }
 
-  const avatar = document.createElement("div");
-  avatar.className = "post-avatar";
-  avatar.textContent = "🐝";
+  const idsUsuarios = [...new Set(posts.map(post => post.user_id))];
 
-  const autor = document.createElement("div");
-  const nome = document.createElement("strong");
-  nome.textContent = "Visitante";
-  const data = document.createElement("small");
-  data.textContent = "Agora";
+  const { data: perfis, error: erroPerfis } = await supabaseClient
+    .from('profiles')
+    .select('id, full_name, username, avatar_url')
+    .in('id', idsUsuarios);
 
-  autor.append(nome, data);
-  cabecalho.append(avatar, autor);
+  if (erroPerfis) console.error(erroPerfis);
 
-  const conteudo = document.createElement("div");
-  conteudo.className = "post-content";
-  conteudo.textContent = texto;
+  const mapaPerfis = Object.fromEntries(
+    (perfis || []).map(perfil => [perfil.id, perfil])
+  );
 
-  const acoes = document.createElement("div");
-  acoes.className = "post-actions";
+  posts.forEach(post => {
+    const perfil = mapaPerfis[post.user_id] || {};
+    const nome = perfil.full_name || perfil.username || 'Meliponicultor';
+    const foto = perfil.avatar_url ||
+      'https://cdn-icons-png.flaticon.com/512/616/616490.png';
 
-  const like = document.createElement("button");
-  like.textContent = "♡ Curtir";
-  like.onclick = () => curtir(like);
+    const artigo = document.createElement('article');
+    artigo.className = 'card';
+    artigo.style.marginTop = '15px';
 
-  const comment = document.createElement("button");
-  comment.textContent = "💬 Comentar";
-  comment.onclick = () => alert("Comentários chegarão na próxima etapa!");
+    const cabecalho = document.createElement('div');
+    cabecalho.className = 'post-header';
 
-  const share = document.createElement("button");
-  share.textContent = "↗ Compartilhar";
-  share.onclick = compartilhar;
+    const avatar = document.createElement('img');
+    avatar.className = 'post-avatar';
+    avatar.src = foto;
+    avatar.alt = 'Foto de ' + nome;
+    avatar.style.objectFit = 'cover';
 
-  acoes.append(like, comment, share);
-  artigo.append(cabecalho, conteudo, acoes);
+    const autor = document.createElement('div');
 
-  document.getElementById("novas-publicacoes").prepend(artigo);
-  campo.value = "";
-  artigo.scrollIntoView({behavior:"smooth"});
+    const nomeAutor = document.createElement('strong');
+    nomeAutor.textContent = nome;
+
+    const data = document.createElement('small');
+    data.textContent = new Date(post.created_at).toLocaleString('pt-BR');
+
+    autor.append(nomeAutor, data);
+    cabecalho.append(avatar, autor);
+
+    const conteudo = document.createElement('div');
+    conteudo.className = 'post-content';
+    conteudo.textContent = post.content;
+
+    artigo.append(cabecalho, conteudo);
+    lista.appendChild(artigo);
+  });
 }
+
+carregarPosts();
 </script>
 
 
