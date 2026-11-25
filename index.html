@@ -1194,8 +1194,11 @@ async function publicarArtigo() {
   }, 1200);
 }
 
+
 async function carregarArtigos() {
   const lista = document.getElementById('lista-artigos');
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
   const { data: artigos, error } = await supabaseClient
     .from('articles')
@@ -1222,33 +1225,48 @@ async function carregarArtigos() {
       "'": '&#39;'
     })[caractere]);
 
-    
-return `
-  <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:18px;margin-bottom:14px">
+    const meuArtigo = user && user.id === artigo.user_id;
 
-    <span style="color:#f5c518;font-size:12px">
-      🌱 ${escapar(artigo.category)}
-    </span>
+    return `
+      <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:18px;margin-bottom:14px">
 
-    <h3 style="color:#f5f5ed;margin:10px 0">
-      ${escapar(artigo.title)}
-    </h3>
+        <span style="color:#f5c518;font-size:12px">
+          🌱 ${escapar(artigo.category)}
+        </span>
 
-    <p style="color:#a3a696;font-size:12px;margin-bottom:12px">
-      📅 ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
-    </p>
+        <h3 style="color:#f5f5ed;margin:10px 0">
+          ${escapar(artigo.title)}
+        </h3>
 
-    <p style="color:#a3a696;line-height:1.6;font-size:13px">
-      ${escapar(artigo.content.substring(0, 150))}${artigo.content.length > 150 ? '...' : ''}
-    </p>
+        <p style="color:#a3a696;font-size:12px;margin-bottom:12px">
+          📅 ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
+        </p>
 
-    <button class="header-button"
-      onclick="abrirArtigo('${artigo.id}')"
-      style="margin-top:15px">
-      📖 Ler artigo
-    </button>
+        <p style="color:#a3a696;line-height:1.6;font-size:13px">
+          ${escapar(artigo.content.substring(0, 150))}${artigo.content.length > 150 ? '...' : ''}
+        </p>
 
-  </article>
+        <button class="header-button"
+          onclick="abrirArtigo('${artigo.id}')"
+          style="margin-top:15px">
+          📖 Ler artigo
+        </button>
+
+        ${meuArtigo ? `
+          <button class="header-button"
+            onclick="editarArtigo('${artigo.id}')"
+            style="margin-top:15px;margin-left:6px">
+            ✏️ Editar
+          </button>
+
+          <button class="header-button"
+            onclick="excluirArtigo('${artigo.id}')"
+            style="margin-top:15px;margin-left:6px;background:#8b2929;color:white">
+            🗑️ Excluir
+          </button>
+        ` : ''}
+
+      </article>
     `;
   }).join('');
 }
@@ -1322,6 +1340,110 @@ async function abrirArtigo(id) {
 
   document.body.appendChild(fundo);
 }
+  
+async function excluirArtigo(id) {
+  const confirmar = confirm('Tem certeza que deseja excluir este artigo?');
+
+  if (!confirmar) return;
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    alert('Entre na sua conta para excluir artigos.');
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('articles')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    alert('Erro ao excluir artigo: ' + error.message);
+    return;
+  }
+
+  alert('Artigo excluído com sucesso! 🐝');
+  carregarArtigos();
+}
+
+async function editarArtigo(id) {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    alert('Entre na sua conta para editar artigos.');
+    return;
+  }
+
+  const { data: artigo, error } = await supabaseClient
+    .from('articles')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !artigo) {
+    alert('Não foi possível encontrar seu artigo.');
+    return;
+  }
+
+  document.getElementById('artigoTitulo').value = artigo.title;
+  document.getElementById('artigoCategoria').value = artigo.category;
+  document.getElementById('artigoConteudo').value = artigo.content;
+
+  const botao = document.querySelector('#modalArtigo button.header-button');
+  botao.textContent = '💾 Salvar alterações';
+  botao.onclick = () => salvarEdicaoArtigo(id);
+
+  abrirEditorArtigo();
+}
+
+async function salvarEdicaoArtigo(id) {
+  const titulo = document.getElementById('artigoTitulo').value.trim();
+  const categoria = document.getElementById('artigoCategoria').value;
+  const conteudo = document.getElementById('artigoConteudo').value.trim();
+
+  if (!titulo || !conteudo) {
+    alert('Preencha o título e o conteúdo!');
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    alert('Entre na sua conta para editar.');
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('articles')
+    .update({
+      title: titulo,
+      category: categoria,
+      content: conteudo
+    })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    alert('Erro ao salvar: ' + error.message);
+    return;
+  }
+
+  alert('Artigo atualizado com sucesso! 🐝');
+
+  document.getElementById('artigoTitulo').value = '';
+  document.getElementById('artigoConteudo').value = '';
+
+  const botao = document.querySelector('#modalArtigo button.header-button');
+  botao.textContent = '🐝 Publicar artigo';
+  botao.onclick = publicarArtigo;
+
+  fecharEditorArtigo();
+  await carregarArtigos();
+}
+
 </script>
 
 
