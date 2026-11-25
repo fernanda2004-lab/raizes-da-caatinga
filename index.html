@@ -607,7 +607,8 @@ header nav,
     <a href="#comunidade">Comunidade</a>
   </nav>
 
- <div id="areaUsuario" style="display:flex;gap:10px;align-items:center">
+
+<div id="areaUsuario" style="display:flex;gap:10px;align-items:center">
   <button class="header-button" onclick="abrirCadastro()">
     Criar conta
   </button>
@@ -615,6 +616,20 @@ header nav,
   <button class="header-button" onclick="abrirLogin()" style="background:#292921;color:white">
     Entrar
   </button>
+</div>
+
+<div id="menuPerfil" style="display:none;position:relative">
+  <button onclick="alternarMenuPerfil()" 
+    style="width:42px;height:42px;border-radius:50%;border:2px solid #f5c518;background:#292921;overflow:hidden;cursor:pointer;padding:0">
+    <img id="fotoPerfilTopo" src="" 
+      style="width:100%;height:100%;object-fit:cover">
+  </button>
+
+  <div id="opcoesPerfil" style="display:none;position:absolute;right:0;top:50px;width:190px;background:#151512;border:1px solid #292921;border-radius:10px;padding:8px;z-index:9999">
+    <button onclick="abrirMeuPerfil()" class="header-button" style="width:100%;margin-bottom:6px">👤 Meu perfil</button>
+    <button onclick="abrirMensagens()" class="header-button" style="width:100%;margin-bottom:6px">✉️ Mensagens</button>
+    <button onclick="sairDaConta()" class="header-button" style="width:100%">🚪 Sair da conta</button>
+  </div>
 </div>
 </header>
 
@@ -1796,36 +1811,54 @@ await atualizarPerfil();
 
 console.log('Usuário conectado:', data.user);
 }
- async function atualizarPerfil() {
+
+async function atualizarPerfil() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
   const nomePerfil = document.getElementById('nomePerfil');
   const areaUsuario = document.getElementById('areaUsuario');
+  const menuPerfil = document.getElementById('menuPerfil');
+  const fotoPerfilTopo = document.getElementById('fotoPerfilTopo');
 
   if (user) {
-    const nome = user.user_metadata?.full_name || user.email;
+    const { data: perfil } = await supabaseClient
+      .from('profiles')
+      .select('full_name, username, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const nome = perfil?.full_name ||
+                 perfil?.username ||
+                 user.user_metadata?.full_name ||
+                 user.email;
+
+    const foto = perfil?.avatar_url ||
+                 user.user_metadata?.avatar_url ||
+                 '';
 
     if (nomePerfil) nomePerfil.textContent = nome;
 
-    if (areaUsuario) {
-      areaUsuario.innerHTML = `
-        <span style="color:#f5c518;font-weight:bold;">Olá, ${nome}</span>
-        <button class="header-button" onclick="sairDaConta()">
-          Sair
-        </button>
-      `;
+    if (areaUsuario) areaUsuario.style.display = 'none';
+    if (menuPerfil) menuPerfil.style.display = 'block';
+
+    if (fotoPerfilTopo) {
+      fotoPerfilTopo.src = foto;
+      fotoPerfilTopo.style.display = foto ? 'block' : 'none';
     }
+
   } else {
     if (nomePerfil) nomePerfil.textContent = 'Visitante';
 
-    if (areaUsuario) {
-      areaUsuario.innerHTML = `
-        <button class="header-button" onclick="abrirCadastro()">Criar conta</button>
-        <button class="header-button" onclick="abrirLogin()" style="background:#292921;color:white">Entrar</button>
-      `;
+    if (areaUsuario) areaUsuario.style.display = 'flex';
+    if (menuPerfil) menuPerfil.style.display = 'none';
+
+    if (fotoPerfilTopo) {
+      fotoPerfilTopo.src = '';
+      fotoPerfilTopo.style.display = 'none';
     }
   }
 }
+
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const nomePerfil = document.getElementById('nomePerfil');
   if (!nomePerfil) return;
@@ -1978,7 +2011,12 @@ async function carregarArtigos() {
     `;
   }).join('');
 }
+function alternarMenuPerfil() {
+  const menu = document.getElementById('opcoesPerfil');
 
+  menu.style.display =
+    menu.style.display === 'none' ? 'block' : 'none';
+}
 carregarArtigos();
   
 async function abrirArtigo(id) {
