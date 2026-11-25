@@ -1576,6 +1576,85 @@ async function carregarVideos() {
     `;
   }).join('');
 }
+let videoEmEdicao = null;
+
+async function editarVideo(id) {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    alert('Entre na sua conta para editar seu vídeo.');
+    abrirLogin();
+    return;
+  }
+
+  const { data: video, error } = await supabaseClient
+    .from('videos')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !video) {
+    alert('Não foi possível encontrar seu vídeo.');
+    return;
+  }
+
+  videoEmEdicao = video.id;
+
+  document.getElementById('editarVideoTitulo').value = video.title || '';
+  document.getElementById('editarVideoDescricao').value = video.description || '';
+  document.getElementById('editarVideoMensagem').textContent = '';
+
+  document.getElementById('modalEditarVideo').style.display = 'flex';
+}
+
+function fecharEdicaoVideo() {
+  document.getElementById('modalEditarVideo').style.display = 'none';
+  videoEmEdicao = null;
+}
+  
+async function salvarEdicaoVideo() {
+  const titulo = document.getElementById('editarVideoTitulo').value.trim();
+  const descricao = document.getElementById('editarVideoDescricao').value.trim();
+  const mensagem = document.getElementById('editarVideoMensagem');
+
+  if (!titulo) {
+    mensagem.textContent = 'Digite o título do vídeo.';
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user || !videoEmEdicao) {
+    mensagem.textContent = 'Não foi possível identificar o vídeo.';
+    return;
+  }
+
+  mensagem.textContent = 'Salvando alterações...';
+
+  const { error } = await supabaseClient
+    .from('videos')
+    .update({
+      title: titulo,
+      description: descricao
+    })
+    .eq('id', videoEmEdicao)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error(error);
+    mensagem.textContent = 'Erro ao salvar as alterações.';
+    return;
+  }
+
+  mensagem.textContent = 'Vídeo atualizado com sucesso!';
+
+  await carregarVideos();
+
+  setTimeout(() => {
+    fecharEdicaoVideo();
+  }, 1200);
+}
 
 carregarVideos();
 
