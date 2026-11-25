@@ -1445,6 +1445,7 @@ async function publicarVideo() {
         setTimeout(() => {
           fecharEditorVideo();
         }, 1500);
+      }
     });
     envioVideoAtual = upload;
     document.getElementById('botaoCancelarVideo').style.display = 'block';
@@ -1465,46 +1466,6 @@ async function publicarVideo() {
     textoProgresso.textContent = 'Não foi possível preparar o vídeo';
   }
 }
-
-
-
-
-
-
-
-    
-  envioVideoAtual = upload;
-  document.getElementById('botaoCancelarVideo').style.display = 'block';
-
-  upload.start();
-
- } catch (erro) {
-  if (cancelamentoManualVideo) {
-    cancelamentoManualVideo = false;
-    mensagem.style.color = '#f5c518';
-    mensagem.textContent = 'Preparação cancelada.';
-    textoProgresso.textContent = 'Cancelado';
-    return;
-  }
-
-  mensagem.style.color = '#ff6464';
-  mensagem.textContent = erro.message;
-  textoProgresso.textContent = 'Não foi possível preparar o vídeo';
-}
-async function carregarVideos() {
-  const lista = document.getElementById('lista-videos');
-
-  const { data: videos, error } = await supabaseClient
-    .from('videos')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    lista.textContent = 'Não foi possível carregar os vídeos.';
-    console.error(error);
-    return;
-  }
-
   if (!videos || videos.length === 0) {
     lista.innerHTML = `
       <p style="color:#a3a696;text-align:center;padding:25px">
