@@ -1466,6 +1466,19 @@ async function publicarVideo() {
     textoProgresso.textContent = 'Não foi possível preparar o vídeo';
   }
 }
+  async function carregarVideos() {
+  const lista = document.getElementById('lista-videos');
+
+  const { data: videos, error } = await supabaseClient
+    .from('videos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    lista.textContent = 'Não foi possível carregar os vídeos.';
+    console.error(error);
+    return;
+  }
   if (!videos || videos.length === 0) {
     lista.innerHTML = `
       <p style="color:#a3a696;text-align:center;padding:25px">
