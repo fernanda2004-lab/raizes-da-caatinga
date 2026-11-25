@@ -773,35 +773,40 @@ Vamos fortalecer a meliponicultura brasileira! 💛
 
 
     
+
 <section id="videos" data-secao="videos" class="card" style="display:none">
 
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px">
     <div>
-      <h2 style="color:#f5c518;font-size:22px">🎬 Vídeos</h2>
+      <h2 style="color:#f5c518;font-size:22px">🎬 Vídeos da Comunidade</h2>
       <p style="color:#a3a696;font-size:13px;margin-top:5px">
-        Aprenda, compartilhe e conheça experiências da meliponicultura.
+        Aprenda e compartilhe experiências sobre a meliponicultura.
       </p>
     </div>
-    <span class="post-tag">🐝 Comunidade</span>
+
+    <button class="header-button" onclick="abrirEditorVideo()">
+      🎥 Publicar vídeo
+    </button>
   </div>
 
-  <div style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:25px;text-align:center;margin-bottom:20px">
-    <div style="font-size:42px;margin-bottom:10px">🎥</div>
-    <h3 style="color:#f5f5ed;font-size:16px">Biblioteca de vídeos</h3>
-    <p style="color:#a3a696;font-size:13px;margin-top:8px">
-      Um espaço para compartilhar manejos, experiências e conhecimentos sobre abelhas nativas sem ferrão.
+  <div style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:22px;margin-bottom:22px">
+    <h3 style="color:#f5f5ed;font-size:16px">🐝 Compartilhe seus conhecimentos</h3>
+    <p style="color:#a3a696;font-size:13px;margin-top:8px;line-height:1.7">
+      Publique vídeos de manejo, alimentação, multiplicação de colônias, espécies e experiências no seu meliponário.
     </p>
   </div>
 
-  <h3 class="section-title">🌱 Vídeos da comunidade</h3>
+  <h3 class="section-title">🌱 Vídeos publicados</h3>
 
-  <div id="lista-videos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px">
+  <div id="lista-videos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px">
 
     <div style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:25px;text-align:center">
-      <div style="font-size:35px">🐝</div>
-      <strong style="display:block;margin-top:10px">Nenhum vídeo publicado ainda</strong>
-      <p style="color:#a3a696;font-size:12px;margin-top:7px">
-        Quando os membros começarem a compartilhar vídeos, eles aparecerão aqui.
+      <div style="font-size:38px">🎥</div>
+      <strong style="display:block;color:#f5f5ed;margin-top:10px">
+        Nenhum vídeo publicado ainda
+      </strong>
+      <p style="color:#a3a696;font-size:13px;margin-top:7px">
+        Seja o primeiro a compartilhar um vídeo!
       </p>
     </div>
 
@@ -809,6 +814,44 @@ Vamos fortalecer a meliponicultura brasileira! 💛
 
 </section>
 
+<div id="modalVideo" style="display:none;position:fixed;inset:0;background:#000c;z-index:9999;align-items:center;justify-content:center;padding:15px">
+
+  <div style="background:#141610;border:1px solid #292d20;border-radius:15px;padding:22px;width:100%;max-width:550px;max-height:90vh;overflow-y:auto">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="color:#f5c518">🎥 Publicar vídeo</h2>
+      <button onclick="fecharEditorVideo()" style="background:none;border:none;color:white;font-size:25px;cursor:pointer">×</button>
+    </div>
+
+    <label style="color:#f5f5ed">Título do vídeo</label>
+    <input id="videoTitulo" type="text" placeholder="Digite o título..."
+      style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
+
+    <label style="color:#f5f5ed">Descrição</label>
+    <textarea id="videoDescricao" rows="4" placeholder="Conte um pouco sobre o vídeo..."
+      style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white;resize:vertical"></textarea>
+
+    <label style="color:#f5f5ed">Escolha seu vídeo</label>
+    <input id="arquivoVideo" type="file" accept="video/mp4,video/webm,video/quicktime"
+      style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
+
+    <p style="color:#a3a696;font-size:12px;margin-bottom:15px">
+      Formatos aceitos: MP4, WebM e MOV.
+    </p>
+
+    <button onclick="publicarVideo()" class="header-button" style="width:100%;padding:13px">
+      🐝 Enviar vídeo
+    </button>
+
+    <p id="videoMensagem" style="margin-top:12px;text-align:center;color:#f5c518;font-size:13px"></p>
+
+  </div>
+</div>
+
+
+
+
+    
 
 <section id="dicas" data-secao="dicas" class="card" style="display:none">
   <h3 class="side-title">💡 Dicas</h3>
@@ -1025,6 +1068,162 @@ async function abrirEditorArtigo() {
 function fecharEditorArtigo() {
   document.getElementById('modalArtigo').style.display = 'none';
 }
+
+async function abrirEditorVideo() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    alert('🌵 Raízes da Caatinga\n\nPara publicar um vídeo, você precisa criar uma conta ou entrar na sua conta.\n\n🐝 Participe da nossa comunidade!');
+    abrirLogin();
+    return;
+  }
+
+  document.getElementById('videoTitulo').value = '';
+  document.getElementById('videoDescricao').value = '';
+  document.getElementById('arquivoVideo').value = '';
+  document.getElementById('videoMensagem').textContent = '';
+
+  document.getElementById('modalVideo').style.display = 'flex';
+}
+
+function fecharEditorVideo() {
+  document.getElementById('modalVideo').style.display = 'none';
+}
+
+async function publicarVideo() {
+  const mensagem = document.getElementById('videoMensagem');
+  const titulo = document.getElementById('videoTitulo').value.trim();
+  const descricao = document.getElementById('videoDescricao').value.trim();
+  const arquivo = document.getElementById('arquivoVideo').files[0];
+
+  if (!titulo || !arquivo) {
+    mensagem.textContent = 'Preencha o título e escolha um vídeo!';
+    return;
+  }
+
+  if (!arquivo.type.startsWith('video/')) {
+    mensagem.textContent = 'Escolha um arquivo de vídeo válido!';
+    return;
+  }
+
+  const { data: { user }, error: erroUsuario } =
+    await supabaseClient.auth.getUser();
+
+  if (erroUsuario || !user) {
+    mensagem.textContent = 'Entre na sua conta para publicar!';
+    abrirLogin();
+    return;
+  }
+
+  mensagem.textContent = 'Enviando vídeo...';
+  mensagem.style.color = '#f5c518';
+
+  const extensao = arquivo.name.split('.').pop().toLowerCase();
+  const nomeArquivo = Date.now() + '-' + crypto.randomUUID() + '.' + extensao;
+  const caminho = user.id + '/' + nomeArquivo;
+
+  const { error: erroUpload } = await supabaseClient
+    .storage
+    .from('videos')
+    .upload(caminho, arquivo, {
+      contentType: arquivo.type,
+      upsert: false
+    });
+
+  if (erroUpload) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = 'Erro no envio: ' + erroUpload.message;
+    return;
+  }
+
+  const { data: urlPublica } = supabaseClient
+    .storage
+    .from('videos')
+    .getPublicUrl(caminho);
+
+  const { error: erroBanco } = await supabaseClient
+    .from('videos')
+    .insert({
+      user_id: user.id,
+      title: titulo,
+      description: descricao,
+      video_url: urlPublica.publicUrl,
+      storage_path: caminho
+    });
+
+  if (erroBanco) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = 'Vídeo enviado, mas houve erro ao salvar: ' + erroBanco.message;
+    return;
+  }
+
+  mensagem.style.color = '#75df86';
+  mensagem.textContent = 'Vídeo publicado com sucesso! 🐝';
+
+  await carregarVideos();
+
+  setTimeout(() => {
+    fecharEditorVideo();
+  }, 1500);
+}
+
+async function carregarVideos() {
+  const lista = document.getElementById('lista-videos');
+
+  const { data: videos, error } = await supabaseClient
+    .from('videos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    lista.textContent = 'Não foi possível carregar os vídeos.';
+    console.error(error);
+    return;
+  }
+
+  if (!videos || videos.length === 0) {
+    lista.innerHTML = `
+      <p style="color:#a3a696;text-align:center;padding:25px">
+        🎥 Nenhum vídeo publicado ainda. Seja o primeiro!
+      </p>
+    `;
+    return;
+  }
+
+  const escapar = texto => String(texto || '').replace(/[&<>"']/g, caractere => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[caractere]);
+
+  lista.innerHTML = videos.map(video => `
+    <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:15px;overflow:hidden">
+
+      <video controls playsinline preload="metadata"
+        style="width:100%;border-radius:9px;background:#000;max-height:280px">
+        <source src="${escapar(video.video_url)}">
+        Seu navegador não suporta vídeos.
+      </video>
+
+      <h3 style="color:#f5c518;margin:12px 0 7px">
+        ${escapar(video.title)}
+      </h3>
+
+      <p style="color:#a3a696;font-size:13px;line-height:1.6">
+        ${escapar(video.description)}
+      </p>
+
+      <p style="color:#888;font-size:11px;margin-top:12px">
+        📅 ${new Date(video.created_at).toLocaleDateString('pt-BR')}
+      </p>
+
+    </article>
+  `).join('');
+}
+
+carregarVideos();
 
 
 
