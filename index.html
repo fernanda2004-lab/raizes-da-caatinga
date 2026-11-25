@@ -851,6 +851,15 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   </div>
 </div>
 
+
+<button
+  id="botaoCancelarVideo"
+  onclick="cancelarEnvioVideo()"
+  style="display:none;width:100%;padding:10px;margin-bottom:12px;background:#3a211d;border:1px solid #a94442;border-radius:8px;color:#ff7777;cursor:pointer">
+  ✖ Cancelar envio
+</button>
+
+    
 <button onclick="publicarVideo()" class="header-button" style="width:100%;padding:13px">
   🐝 Enviar vídeo
 </button>
@@ -1234,8 +1243,28 @@ desenhar();
   });
 }
 
+let cancelamentoManualVideo = false;
+let envioVideoAtual = null;
+function cancelarEnvioVideo() {
+ cancelamentoManualVideo = true;
+  if (envioVideoAtual) {
+    envioVideoAtual.abort();
 
+    envioVideoAtual = null;
 
+    document.getElementById('botaoCancelarVideo').style.display = 'none';
+    document.getElementById('areaProgressoVideo').style.display = 'none';
+
+    document.getElementById('barraProgressoVideo').style.width = '0%';
+    document.getElementById('porcentagemVideo').textContent = '0%';
+
+    document.getElementById('videoMensagem').style.color = '#f5c518';
+    document.getElementById('videoMensagem').textContent = 'Envio cancelado.';
+
+    document.getElementById('textoProgressoVideo').textContent = 'Envio cancelado';
+  }
+}
+  
 async function publicarVideo() {
   const mensagem = document.getElementById('videoMensagem');
   const areaProgresso = document.getElementById('areaProgressoVideo');
@@ -1322,11 +1351,20 @@ async function publicarVideo() {
 
       chunkSize: 6 * 1024 * 1024,
 
-      onError: function(error) {
-        mensagem.style.color = '#ff6464';
-        mensagem.textContent = 'Erro no envio: ' + error.message;
-        textoProgresso.textContent = 'Falha no envio';
-      },
+     onError: function(error) {
+  envioVideoAtual = null;
+
+  document.getElementById('botaoCancelarVideo').style.display = 'none';
+
+  if (cancelamentoManualVideo) {
+    cancelamentoManualVideo = false;
+    return;
+  }
+
+  mensagem.style.color = '#ff6464';
+  mensagem.textContent = 'Erro no envio: ' + error.message;
+  textoProgresso.textContent = 'Falha no envio';
+},
 
       onProgress: function(bytesUploaded, bytesTotal) {
         const progresso = Math.round(bytesUploaded / bytesTotal * 100);
@@ -1334,9 +1372,13 @@ async function publicarVideo() {
         porcentagem.textContent = progresso + '%';
       },
 
-      onSuccess: async function() {
-        textoProgresso.textContent = 'Salvando publicação...';
+        onSuccess: async function() {
+  envioVideoAtual = null;
+  cancelamentoManualVideo = false;
+  document.getElementById('botaoCancelarVideo').style.display = 'none';
 
+  textoProgresso.textContent = 'Salvando publicação...';
+      
         const { data: urlPublica } = supabaseClient
           .storage
           .from('videos')
@@ -1373,7 +1415,10 @@ async function publicarVideo() {
       }
     });
 
-    upload.start();
+  envioVideoAtual = upload;
+  document.getElementById('botaoCancelarVideo').style.display = 'block';
+
+  upload.start();
 
   } catch (erro) {
     mensagem.style.color = '#ff6464';
