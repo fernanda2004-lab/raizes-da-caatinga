@@ -953,7 +953,29 @@ Vamos fortalecer a meliponicultura brasileira! 💛
     <button class="header-button" onclick="editarMeuPerfil()" style="margin-top:20px">
       ✏️ Editar perfil
     </button>
+<div style="margin-top:15px">
+  <label style="color:#f5c518;display:block;margin-bottom:8px">
+    📷 Escolher foto de perfil
+  </label>
 
+  <input
+    type="file"
+    id="novaFotoPerfil"
+    accept="image/*"
+    style="color:white;max-width:100%"
+  >
+
+  <button
+    class="header-button"
+    onclick="enviarFotoPerfil()"
+    style="margin-top:10px">
+    🐝 Salvar foto
+  </button>
+
+  <p id="mensagemFotoPerfil"
+    style="color:#f5c518;font-size:13px;margin-top:8px">
+  </p>
+</div>
   </div>
 
   <div style="border-top:1px solid #292921;padding-top:20px;margin-top:15px">
@@ -1937,6 +1959,72 @@ async function editarMeuPerfil() {
   await atualizarPerfil();
 }
 
+async function enviarFotoPerfil() {
+  const arquivo = document.getElementById('novaFotoPerfil').files[0];
+  const mensagem = document.getElementById('mensagemFotoPerfil');
+
+  if (!arquivo) {
+    mensagem.textContent = 'Escolha uma foto primeiro.';
+    return;
+  }
+
+  if (!arquivo.type.startsWith('image/')) {
+    mensagem.textContent = 'Escolha um arquivo de imagem.';
+    return;
+  }
+
+  if (arquivo.size > 5 * 1024 * 1024) {
+    mensagem.textContent = 'A foto deve ter no máximo 5 MB.';
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    mensagem.textContent = 'Entre na sua conta primeiro.';
+    return;
+  }
+
+  mensagem.textContent = 'Enviando foto...';
+
+  const extensao = arquivo.name.split('.').pop().toLowerCase();
+  const caminho = user.id + '/' + Date.now() + '.' + extensao;
+
+  const { error: erroEnvio } = await supabaseClient.storage
+    .from('avatars')
+    .upload(caminho, arquivo);
+
+  if (erroEnvio) {
+    console.error(erroEnvio);
+    mensagem.textContent = 'Erro ao enviar a foto.';
+    return;
+  }
+
+  const { data: urlPublica } = supabaseClient.storage
+    .from('avatars')
+    .getPublicUrl(caminho);
+
+  const { error } = await supabaseClient
+    .from('profiles')
+    .update({
+      avatar_url: urlPublica.publicUrl
+    })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error(error);
+    mensagem.textContent = 'Foto enviada, mas não foi possível salvar no perfil.';
+    return;
+  }
+
+  mensagem.textContent = 'Foto de perfil atualizada! 🐝';
+
+  document.getElementById('novaFotoPerfil').value = '';
+
+  await atualizarPerfil();
+  await abrirMeuPerfil();
+}
+
 
   
 supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -2133,11 +2221,8 @@ async function abrirMeuPerfil() {
 
   const fotoGrande = document.getElementById('fotoPerfilGrande');
 
-  if (foto) {
-    fotoGrande.src = foto;
-  } else {
-    fotoGrande.src = 'https://placehold.co/110x110/292921/f5c518?text=Perfil';
-  }
+ fotoGrande.src = foto ||
+  'https://cdn-icons-png.flaticon.com/512/616/616490.png';
 }
 
 carregarArtigos();
