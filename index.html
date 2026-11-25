@@ -1005,7 +1005,7 @@ async function abrirEditorArtigo() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
   if (!user) {
-    alert('🐝 Você precisa entrar na sua conta para publicar um artigo!');
+   alert('🌵 Raízes da Caatinga\n\nPara publicar um artigo, você precisa criar uma conta ou entrar na sua conta.\n\n🐝 Participe da nossa comunidade!');
     abrirLogin();
     return;
   }
