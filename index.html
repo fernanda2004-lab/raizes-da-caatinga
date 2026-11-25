@@ -868,6 +868,33 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   </div>
 </div>
 
+<!-- Janela para editar vídeo -->
+<div id="modalEditarVideo" style="display:none;position:fixed;inset:0;background:#000c;z-index:10000;align-items:center;justify-content:center;padding:15px">
+
+  <div style="background:#141610;border:1px solid #292d20;border-radius:15px;padding:22px;width:100%;max-width:550px">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="color:#f5c518">✏️ Editar vídeo</h2>
+      <button onclick="fecharEdicaoVideo()" style="background:none;border:none;color:white;font-size:25px;cursor:pointer">×</button>
+    </div>
+
+    <label style="color:#f5f5ed">Título do vídeo</label>
+    <input id="editarVideoTitulo" type="text"
+      style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
+
+    <label style="color:#f5f5ed">Descrição</label>
+    <textarea id="editarVideoDescricao" rows="4"
+      style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white;resize:vertical"></textarea>
+
+    <button onclick="salvarEdicaoVideo()" class="header-button" style="width:100%;padding:13px">
+      💾 Salvar alterações
+    </button>
+
+    <p id="editarVideoMensagem" style="margin-top:12px;text-align:center;color:#f5c518;font-size:13px"></p>
+
+  </div>
+</div>
+
 
 
 
