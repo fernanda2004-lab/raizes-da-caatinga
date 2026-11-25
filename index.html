@@ -929,7 +929,39 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   <h3 class="side-title">👥 Comunidade</h3>
   <p class="post-content">Um espaço para conhecer outros meliponicultores e trocar experiências sobre a criação de abelhas sem ferrão.</p>
 </section>
+<section id="meuPerfil" data-secao="meuPerfil" class="card" style="display:none">
 
+  <h3 class="side-title">👤 Meu perfil</h3>
+
+  <div style="text-align:center;padding:20px">
+
+    <img id="fotoPerfilGrande" src=""
+      style="width:110px;height:110px;border-radius:50%;object-fit:cover;background:#292921;border:3px solid #f5c518">
+
+    <h2 id="perfilNome" style="color:#f5c518;margin-top:12px">
+      Meu nome
+    </h2>
+
+    <p id="perfilUsuario" style="color:#a3a696;margin-top:5px">
+      @usuario
+    </p>
+
+    <p id="perfilBio" style="color:#f5f5ed;margin-top:15px">
+      Minha biografia aparecerá aqui.
+    </p>
+
+    <button class="header-button" onclick="editarMeuPerfil()" style="margin-top:20px">
+      ✏️ Editar perfil
+    </button>
+
+  </div>
+
+  <div style="border-top:1px solid #292921;padding-top:20px;margin-top:15px">
+    <h3 style="color:#f5c518;margin-bottom:15px">Minhas publicações</h3>
+    <div id="minhasPublicacoes"></div>
+  </div>
+
+</section>
   </main>
 
   <aside class="right-sidebar">
@@ -1859,6 +1891,52 @@ async function atualizarPerfil() {
   }
 }
 
+async function editarMeuPerfil() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    abrirLogin();
+    return;
+  }
+
+  const { data: perfil } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const nome = prompt('Digite seu nome:', perfil?.full_name || '');
+  if (nome === null) return;
+
+  const usuario = prompt('Escolha seu nome de usuário:', perfil?.username || '');
+  if (usuario === null) return;
+
+  const bio = prompt('Escreva sua biografia:', perfil?.bio || '');
+  if (bio === null) return;
+
+  const { error } = await supabaseClient
+    .from('profiles')
+    .upsert({
+      id: user.id,
+      full_name: nome.trim(),
+      username: usuario.trim().replace(/^@/, ''),
+      bio: bio.trim()
+    });
+
+  if (error) {
+    console.error(error);
+    alert('Não foi possível salvar o perfil: ' + error.message);
+    return;
+  }
+
+  alert('Perfil atualizado com sucesso!');
+
+  await abrirMeuPerfil();
+  await atualizarPerfil();
+}
+
+
+  
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const nomePerfil = document.getElementById('nomePerfil');
   if (!nomePerfil) return;
@@ -2017,6 +2095,49 @@ function alternarMenuPerfil() {
   menu.style.display =
     menu.style.display === 'none' ? 'block' : 'none';
 }
+  
+async function abrirMeuPerfil() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    abrirLogin();
+    return;
+  }
+
+  mostrarSecao('meuPerfil');
+
+  const { data: perfil, error } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    alert('Não foi possível carregar seu perfil.');
+    return;
+  }
+
+  document.getElementById('perfilNome').textContent =
+    perfil?.full_name || 'Sem nome cadastrado';
+
+  document.getElementById('perfilUsuario').textContent =
+    perfil?.username ? '@' + perfil.username : '@usuario';
+
+  document.getElementById('perfilBio').textContent =
+    perfil?.bio || 'Você ainda não adicionou uma biografia.';
+
+  const foto = perfil?.avatar_url || '';
+
+  const fotoGrande = document.getElementById('fotoPerfilGrande');
+
+  if (foto) {
+    fotoGrande.src = foto;
+  } else {
+    fotoGrande.src = 'https://placehold.co/110x110/292921/f5c518?text=Perfil';
+  }
+}
+
 carregarArtigos();
   
 async function abrirArtigo(id) {
