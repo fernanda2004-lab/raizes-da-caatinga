@@ -1217,9 +1217,10 @@ async function comprimirVideo(arquivo, aoProgredir) {
           animacao = requestAnimationFrame(desenhar);
         }
 
-        gravador.start(1000);
-        await video.play();
-        desenhar();
+       gravador.start(1000);
+video.muted = true;
+await video.play();
+desenhar();
 
         video.onended = () => {
           if (gravador.state !== 'inactive') gravador.stop();
