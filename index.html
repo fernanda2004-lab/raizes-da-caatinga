@@ -1014,7 +1014,9 @@ function mostrarSecao(secao, item) {
   });
 
   // Ativa somente o botão clicado
-  item.classList.add("active");
+  if (item) {
+    item.classList.add("active");
+  }
 
   // Esconde todas as seções
   document.querySelectorAll("[data-secao]").forEach(area => {
