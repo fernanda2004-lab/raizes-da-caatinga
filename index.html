@@ -835,16 +835,27 @@ Vamos fortalecer a meliponicultura brasileira! 💛
     <input id="arquivoVideo" type="file" accept="video/mp4,video/webm,video/quicktime"
       style="width:100%;padding:12px;margin:8px 0 16px;background:#1c2017;border:1px solid #292d20;border-radius:8px;color:white">
 
-    <p style="color:#a3a696;font-size:12px;margin-bottom:15px">
-      Formatos aceitos: MP4, WebM e MOV.
-    </p>
+  
+<p style="color:#a3a696;font-size:12px;margin-bottom:15px">
+  Formatos aceitos: MP4, WebM e MOV.
+</p>
 
-    <button onclick="publicarVideo()" class="header-button" style="width:100%;padding:13px">
-      🐝 Enviar vídeo
-    </button>
+<div id="areaProgressoVideo" style="display:none;margin:15px 0">
+  <div style="display:flex;justify-content:space-between;color:#f5f5ed;font-size:12px;margin-bottom:8px">
+    <span id="textoProgressoVideo">Enviando vídeo...</span>
+    <strong id="porcentagemVideo">0%</strong>
+  </div>
 
-    <p id="videoMensagem" style="margin-top:12px;text-align:center;color:#f5c518;font-size:13px"></p>
+  <div style="width:100%;height:10px;background:#292921;border-radius:20px;overflow:hidden">
+    <div id="barraProgressoVideo" style="width:0%;height:100%;background:#f5c518;border-radius:20px;transition:width .2s"></div>
+  </div>
+</div>
 
+<button onclick="publicarVideo()" class="header-button" style="width:100%;padding:13px">
+  🐝 Enviar vídeo
+</button>
+
+<p id="videoMensagem" style="margin-top:12px;text-align:center;color:#f5c518;font-size:13px"></p>
   </div>
 </div>
 
@@ -1016,7 +1027,7 @@ function publicar() {
 
 <!-- Conexão com Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/tus-js-client@4/dist/tus.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://olkuxqbqiuliekfprtuo.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_cSXN_29Ff0t1EciP2Sr7yA_bjDKRSxP';
@@ -1090,8 +1101,14 @@ function fecharEditorVideo() {
   document.getElementById('modalVideo').style.display = 'none';
 }
 
+
 async function publicarVideo() {
   const mensagem = document.getElementById('videoMensagem');
+  const areaProgresso = document.getElementById('areaProgressoVideo');
+  const barra = document.getElementById('barraProgressoVideo');
+  const porcentagem = document.getElementById('porcentagemVideo');
+  const textoProgresso = document.getElementById('textoProgressoVideo');
+
   const titulo = document.getElementById('videoTitulo').value.trim();
   const descricao = document.getElementById('videoDescricao').value.trim();
   const arquivo = document.getElementById('arquivoVideo').files[0];
@@ -1106,65 +1123,111 @@ async function publicarVideo() {
     return;
   }
 
-  const { data: { user }, error: erroUsuario } =
-    await supabaseClient.auth.getUser();
+  if (typeof tus === 'undefined') {
+    mensagem.textContent = 'Não foi possível carregar o sistema de envio. Atualize a página.';
+    return;
+  }
 
-  if (erroUsuario || !user) {
+  const { data: { session }, error: erroSessao } =
+    await supabaseClient.auth.getSession();
+
+  if (erroSessao || !session) {
     mensagem.textContent = 'Entre na sua conta para publicar!';
     abrirLogin();
     return;
   }
 
-  mensagem.textContent = 'Enviando vídeo...';
-  mensagem.style.color = '#f5c518';
+  const user = session.user;
 
   const extensao = arquivo.name.split('.').pop().toLowerCase();
   const nomeArquivo = Date.now() + '-' + crypto.randomUUID() + '.' + extensao;
   const caminho = user.id + '/' + nomeArquivo;
 
-  const { error: erroUpload } = await supabaseClient
-    .storage
-    .from('videos')
-    .upload(caminho, arquivo, {
+  mensagem.style.color = '#f5c518';
+  mensagem.textContent = 'Preparando envio...';
+
+  areaProgresso.style.display = 'block';
+  barra.style.width = '0%';
+  porcentagem.textContent = '0%';
+  textoProgresso.textContent = 'Enviando vídeo...';
+
+  const upload = new tus.Upload(arquivo, {
+    endpoint: SUPABASE_URL + '/storage/v1/upload/resumable',
+
+    retryDelays: [0, 3000, 5000, 10000, 20000],
+
+    headers: {
+      authorization: 'Bearer ' + session.access_token,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      'x-upsert': 'false'
+    },
+
+    uploadDataDuringCreation: true,
+    removeFingerprintOnSuccess: true,
+
+    metadata: {
+      bucketName: 'videos',
+      objectName: caminho,
       contentType: arquivo.type,
-      upsert: false
-    });
+      cacheControl: '3600'
+    },
 
-  if (erroUpload) {
-    mensagem.style.color = '#ff6464';
-    mensagem.textContent = 'Erro no envio: ' + erroUpload.message;
-    return;
-  }
+    chunkSize: 6 * 1024 * 1024,
 
-  const { data: urlPublica } = supabaseClient
-    .storage
-    .from('videos')
-    .getPublicUrl(caminho);
+    onError: function(error) {
+      mensagem.style.color = '#ff6464';
+      mensagem.textContent = 'Erro no envio: ' + error.message;
+      textoProgresso.textContent = 'Falha no envio';
+    },
 
-  const { error: erroBanco } = await supabaseClient
-    .from('videos')
-    .insert({
-      user_id: user.id,
-      title: titulo,
-      description: descricao,
-      video_url: urlPublica.publicUrl,
-      storage_path: caminho
-    });
+    onProgress: function(bytesUploaded, bytesTotal) {
+      const progresso = Math.round((bytesUploaded / bytesTotal) * 100);
 
-  if (erroBanco) {
-    mensagem.style.color = '#ff6464';
-    mensagem.textContent = 'Vídeo enviado, mas houve erro ao salvar: ' + erroBanco.message;
-    return;
-  }
+      barra.style.width = progresso + '%';
+      porcentagem.textContent = progresso + '%';
+      textoProgresso.textContent = 'Enviando vídeo...';
+    },
 
-  mensagem.style.color = '#75df86';
-  mensagem.textContent = 'Vídeo publicado com sucesso! 🐝';
+    onSuccess: async function() {
+      textoProgresso.textContent = 'Salvando publicação...';
 
-  await carregarVideos();
+      const { data: urlPublica } = supabaseClient
+        .storage
+        .from('videos')
+        .getPublicUrl(caminho);
 
-  setTimeout(() => {
-    fecharEditorVideo();
-  }, 1500);
+      const { error: erroBanco } = await supabaseClient
+        .from('videos')
+        .insert({
+          user_id: user.id,
+          title: titulo,
+          description: descricao,
+          video_url: urlPublica.publicUrl,
+          storage_path: caminho
+        });
+
+      if (erroBanco) {
+        mensagem.style.color = '#ff6464';
+        mensagem.textContent = 'Vídeo enviado, mas houve erro ao salvar: ' + erroBanco.message;
+        return;
+      }
+
+      barra.style.width = '100%';
+      porcentagem.textContent = '100%';
+      textoProgresso.textContent = 'Concluído!';
+
+      mensagem.style.color = '#75df86';
+      mensagem.textContent = 'Vídeo publicado com sucesso! 🐝';
+
+      await carregarVideos();
+
+      setTimeout(() => {
+        fecharEditorVideo();
+      }, 1500);
+    }
+  });
+
+  upload.start();
 }
 
 async function carregarVideos() {
