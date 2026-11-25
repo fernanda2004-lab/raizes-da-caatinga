@@ -1510,6 +1510,7 @@ async function salvarEdicaoArtigo(id) {
 
 
 <!-- Janela de login -->
+
 <div id="modalLogin" style="
   display:none;
   position:fixed;
@@ -1542,6 +1543,14 @@ async function salvarEdicaoArtigo(id) {
       style="width:100%;padding:13px;background:#f5c518;color:#111;border:0;border-radius:8px;font-weight:bold;cursor:pointer">
       Entrar
     </button>
+
+    <p style="text-align:center;color:#aaa;font-size:13px;margin-top:17px">
+      Não tem uma conta?
+      <a href="#" onclick="event.preventDefault();fecharLogin();abrirCadastro()"
+        style="color:#f5c518;font-weight:bold;text-decoration:none">
+        Criar conta
+      </a>
+    </p>
 
     <button onclick="fecharLogin()"
       style="width:100%;padding:12px;margin-top:10px;background:transparent;color:#aaa;border:0;cursor:pointer">
