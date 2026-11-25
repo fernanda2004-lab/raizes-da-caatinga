@@ -1447,7 +1447,33 @@ async function publicarVideo() {
         }, 1500);
       }
     });
+    envioVideoAtual = upload;
+    document.getElementById('botaoCancelarVideo').style.display = 'block';
 
+    upload.start();
+
+  } catch (erro) {
+    if (cancelamentoManualVideo) {
+      cancelamentoManualVideo = false;
+      mensagem.style.color = '#f5c518';
+      mensagem.textContent = 'Preparação cancelada.';
+      textoProgresso.textContent = 'Cancelado';
+      return;
+    }
+
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = erro.message;
+    textoProgresso.textContent = 'Não foi possível preparar o vídeo';
+  }
+}
+
+
+
+
+
+
+
+    
   envioVideoAtual = upload;
   document.getElementById('botaoCancelarVideo').style.display = 'block';
 
