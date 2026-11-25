@@ -1101,6 +1101,139 @@ function fecharEditorVideo() {
   document.getElementById('modalVideo').style.display = 'none';
 }
 
+async function comprimirVideo(arquivo, aoProgredir) {
+  if (arquivo.size <= 45 * 1024 * 1024) {
+    return arquivo;
+  }
+
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+    throw new Error('Seu navegador não suporta compressão automática. Use Chrome ou Edge atualizado.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const contexto = canvas.getContext('2d');
+    const url = URL.createObjectURL(arquivo);
+
+    let gravador;
+    let partes = [];
+    let animacao;
+
+    video.src = url;
+    video.preload = 'auto';
+    video.playsInline = true;
+
+    function limpar() {
+      cancelAnimationFrame(animacao);
+      URL.revokeObjectURL(url);
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    video.onerror = () => {
+      limpar();
+      reject(new Error('Não foi possível ler este vídeo.'));
+    };
+
+    video.onloadedmetadata = async () => {
+      try {
+        const proporcao = Math.min(1, 1280 / video.videoWidth, 720 / video.videoHeight);
+
+        canvas.width = Math.floor(video.videoWidth * proporcao);
+        canvas.height = Math.floor(video.videoHeight * proporcao);
+
+        const fluxoVideo = canvas.captureStream(24);
+
+        if (typeof video.captureStream !== 'function') {
+          limpar();
+          reject(new Error('Este navegador não permite comprimir o áudio do vídeo.'));
+          return;
+        }
+
+        const fluxoOriginal = video.captureStream();
+        const audio = fluxoOriginal.getAudioTracks();
+
+        const fluxoFinal = new MediaStream([
+          ...fluxoVideo.getVideoTracks(),
+          ...audio
+        ]);
+
+        const tipo = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+          ? 'video/webm;codecs=vp8,opus'
+          : 'video/webm';
+
+        const bitrateVideo = Math.max(
+          250000,
+          Math.min(1800000, Math.floor((42 * 1024 * 1024 * 8 / video.duration) - 96000))
+        );
+
+        gravador = new MediaRecorder(fluxoFinal, {
+          mimeType: tipo,
+          videoBitsPerSecond: bitrateVideo,
+          audioBitsPerSecond: 96000
+        });
+
+        gravador.ondataavailable = evento => {
+          if (evento.data.size > 0) partes.push(evento.data);
+        };
+
+        gravador.onerror = () => {
+          limpar();
+          reject(new Error('Falha durante a compressão.'));
+        };
+
+        gravador.onstop = () => {
+          limpar();
+
+          const comprimido = new File(
+            partes,
+            arquivo.name.replace(/\.[^.]+$/, '') + '.webm',
+            { type: 'video/webm' }
+          );
+
+          if (comprimido.size >= arquivo.size) {
+            reject(new Error('Não foi possível reduzir o tamanho deste vídeo. Tente outro arquivo.'));
+            return;
+          }
+
+          if (comprimido.size > 50 * 1024 * 1024) {
+            reject(new Error('O vídeo continua acima de 50 MB. Tente um vídeo mais curto.'));
+            return;
+          }
+
+          resolve(comprimido);
+        };
+
+        function desenhar() {
+          if (video.paused || video.ended) return;
+
+          contexto.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const progresso = Math.round((video.currentTime / video.duration) * 100);
+          aoProgredir(progresso);
+
+          animacao = requestAnimationFrame(desenhar);
+        }
+
+        gravador.start(1000);
+        await video.play();
+        desenhar();
+
+        video.onended = () => {
+          if (gravador.state !== 'inactive') gravador.stop();
+        };
+
+      } catch (erro) {
+        limpar();
+        reject(erro);
+      }
+    };
+  });
+}
+
+
 
 async function publicarVideo() {
   const mensagem = document.getElementById('videoMensagem');
@@ -1111,7 +1244,7 @@ async function publicarVideo() {
 
   const titulo = document.getElementById('videoTitulo').value.trim();
   const descricao = document.getElementById('videoDescricao').value.trim();
-  const arquivo = document.getElementById('arquivoVideo').files[0];
+  let arquivo = document.getElementById('arquivoVideo').files[0];
 
   if (!titulo || !arquivo) {
     mensagem.textContent = 'Preencha o título e escolha um vídeo!';
@@ -1124,7 +1257,7 @@ async function publicarVideo() {
   }
 
   if (typeof tus === 'undefined') {
-    mensagem.textContent = 'Não foi possível carregar o sistema de envio. Atualize a página.';
+    mensagem.textContent = 'Sistema de envio não carregado. Atualize a página.';
     return;
   }
 
@@ -1137,99 +1270,116 @@ async function publicarVideo() {
     return;
   }
 
-  const user = session.user;
-
-  const extensao = arquivo.name.split('.').pop().toLowerCase();
-  const nomeArquivo = Date.now() + '-' + crypto.randomUUID() + '.' + extensao;
-  const caminho = user.id + '/' + nomeArquivo;
-
-  mensagem.style.color = '#f5c518';
-  mensagem.textContent = 'Preparando envio...';
-
   areaProgresso.style.display = 'block';
   barra.style.width = '0%';
   porcentagem.textContent = '0%';
-  textoProgresso.textContent = 'Enviando vídeo...';
 
-  const upload = new tus.Upload(arquivo, {
-    endpoint: SUPABASE_URL + '/storage/v1/upload/resumable',
+  try {
+    if (arquivo.size > 45 * 1024 * 1024) {
+      mensagem.style.color = '#f5c518';
+      mensagem.textContent = 'Preparando compressão do vídeo...';
+      textoProgresso.textContent = 'Comprimindo vídeo...';
 
-    retryDelays: [0, 3000, 5000, 10000, 20000],
-
-    headers: {
-      authorization: 'Bearer ' + session.access_token,
-      apikey: SUPABASE_PUBLISHABLE_KEY,
-      'x-upsert': 'false'
-    },
-
-    uploadDataDuringCreation: true,
-    removeFingerprintOnSuccess: true,
-
-    metadata: {
-      bucketName: 'videos',
-      objectName: caminho,
-      contentType: arquivo.type,
-      cacheControl: '3600'
-    },
-
-    chunkSize: 6 * 1024 * 1024,
-
-    onError: function(error) {
-      mensagem.style.color = '#ff6464';
-      mensagem.textContent = 'Erro no envio: ' + error.message;
-      textoProgresso.textContent = 'Falha no envio';
-    },
-
-    onProgress: function(bytesUploaded, bytesTotal) {
-      const progresso = Math.round((bytesUploaded / bytesTotal) * 100);
-
-      barra.style.width = progresso + '%';
-      porcentagem.textContent = progresso + '%';
-      textoProgresso.textContent = 'Enviando vídeo...';
-    },
-
-    onSuccess: async function() {
-      textoProgresso.textContent = 'Salvando publicação...';
-
-      const { data: urlPublica } = supabaseClient
-        .storage
-        .from('videos')
-        .getPublicUrl(caminho);
-
-      const { error: erroBanco } = await supabaseClient
-        .from('videos')
-        .insert({
-          user_id: user.id,
-          title: titulo,
-          description: descricao,
-          video_url: urlPublica.publicUrl,
-          storage_path: caminho
-        });
-
-      if (erroBanco) {
-        mensagem.style.color = '#ff6464';
-        mensagem.textContent = 'Vídeo enviado, mas houve erro ao salvar: ' + erroBanco.message;
-        return;
-      }
-
-      barra.style.width = '100%';
-      porcentagem.textContent = '100%';
-      textoProgresso.textContent = 'Concluído!';
-
-      mensagem.style.color = '#75df86';
-      mensagem.textContent = 'Vídeo publicado com sucesso! 🐝';
-
-      await carregarVideos();
-
-      setTimeout(() => {
-        fecharEditorVideo();
-      }, 1500);
+      arquivo = await comprimirVideo(arquivo, progresso => {
+        barra.style.width = progresso + '%';
+        porcentagem.textContent = progresso + '%';
+      });
     }
-  });
 
-  upload.start();
+    if (arquivo.size > 50 * 1024 * 1024) {
+      throw new Error('O vídeo ultrapassa o limite de 50 MB.');
+    }
+
+    const user = session.user;
+    const nomeArquivo = Date.now() + '-' + crypto.randomUUID() + '.webm';
+    const caminho = user.id + '/' + nomeArquivo;
+
+    mensagem.textContent = 'Enviando vídeo...';
+    textoProgresso.textContent = 'Enviando para o servidor...';
+    barra.style.width = '0%';
+    porcentagem.textContent = '0%';
+
+    const upload = new tus.Upload(arquivo, {
+      endpoint: SUPABASE_URL + '/storage/v1/upload/resumable',
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+
+      headers: {
+        authorization: 'Bearer ' + session.access_token,
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        'x-upsert': 'false'
+      },
+
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+
+      metadata: {
+        bucketName: 'videos',
+        objectName: caminho,
+        contentType: arquivo.type,
+        cacheControl: '3600'
+      },
+
+      chunkSize: 6 * 1024 * 1024,
+
+      onError: function(error) {
+        mensagem.style.color = '#ff6464';
+        mensagem.textContent = 'Erro no envio: ' + error.message;
+        textoProgresso.textContent = 'Falha no envio';
+      },
+
+      onProgress: function(bytesUploaded, bytesTotal) {
+        const progresso = Math.round(bytesUploaded / bytesTotal * 100);
+        barra.style.width = progresso + '%';
+        porcentagem.textContent = progresso + '%';
+      },
+
+      onSuccess: async function() {
+        textoProgresso.textContent = 'Salvando publicação...';
+
+        const { data: urlPublica } = supabaseClient
+          .storage
+          .from('videos')
+          .getPublicUrl(caminho);
+
+        const { error: erroBanco } = await supabaseClient
+          .from('videos')
+          .insert({
+            user_id: user.id,
+            title: titulo,
+            description: descricao,
+            video_url: urlPublica.publicUrl,
+            storage_path: caminho
+          });
+
+        if (erroBanco) {
+          mensagem.style.color = '#ff6464';
+          mensagem.textContent = 'Vídeo enviado, mas houve erro ao salvar: ' + erroBanco.message;
+          return;
+        }
+
+        barra.style.width = '100%';
+        porcentagem.textContent = '100%';
+        textoProgresso.textContent = 'Concluído!';
+
+        mensagem.style.color = '#75df86';
+        mensagem.textContent = 'Vídeo publicado com sucesso! 🐝';
+
+        await carregarVideos();
+
+        setTimeout(() => {
+          fecharEditorVideo();
+        }, 1500);
+      }
+    });
+
+    upload.start();
+
+  } catch (erro) {
+    mensagem.style.color = '#ff6464';
+    mensagem.textContent = erro.message;
+    textoProgresso.textContent = 'Não foi possível preparar o vídeo';
+  }
 }
-
 async function carregarVideos() {
   const lista = document.getElementById('lista-videos');
 
