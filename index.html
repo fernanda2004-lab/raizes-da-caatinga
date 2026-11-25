@@ -1222,21 +1222,106 @@ async function carregarArtigos() {
       "'": '&#39;'
     })[caractere]);
 
-    return `
-      <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:18px;margin-bottom:14px">
-        <span style="color:#f5c518;font-size:12px">🌱 ${escapar(artigo.category)}</span>
-        <h3 style="color:#f5f5ed;margin:10px 0">${escapar(artigo.title)}</h3>
-        <p style="color:#a3a696;font-size:12px;margin-bottom:12px">
-          ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
-        </p>
-        <p style="color:#f5f5ed;line-height:1.7;white-space:pre-wrap">${escapar(artigo.content)}</p>
-      </article>
+    
+return `
+  <article style="background:#1c2017;border:1px solid #292d20;border-radius:12px;padding:18px;margin-bottom:14px">
+
+    <span style="color:#f5c518;font-size:12px">
+      🌱 ${escapar(artigo.category)}
+    </span>
+
+    <h3 style="color:#f5f5ed;margin:10px 0">
+      ${escapar(artigo.title)}
+    </h3>
+
+    <p style="color:#a3a696;font-size:12px;margin-bottom:12px">
+      📅 ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
+    </p>
+
+    <p style="color:#a3a696;line-height:1.6;font-size:13px">
+      ${escapar(artigo.content.substring(0, 150))}${artigo.content.length > 150 ? '...' : ''}
+    </p>
+
+    <button class="header-button"
+      onclick="abrirArtigo('${artigo.id}')"
+      style="margin-top:15px">
+      📖 Ler artigo
+    </button>
+
+  </article>
     `;
   }).join('');
 }
 
 carregarArtigos();
+  
+async function abrirArtigo(id) {
+  const { data: artigo, error } = await supabaseClient
+    .from('articles')
+    .select('*')
+    .eq('id', id)
+    .single();
 
+  if (error || !artigo) {
+    alert('Não foi possível abrir este artigo.');
+    return;
+  }
+
+  const fundo = document.createElement('div');
+  fundo.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    background:#000d;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:15px;
+  `;
+
+  const caixa = document.createElement('div');
+  caixa.style.cssText = `
+    background:#141610;
+    border:1px solid #292d20;
+    border-radius:15px;
+    padding:25px;
+    width:100%;
+    max-width:750px;
+    max-height:90vh;
+    overflow-y:auto;
+    color:#f5f5ed;
+  `;
+
+  const titulo = document.createElement('h2');
+  titulo.textContent = artigo.title;
+  titulo.style.cssText = 'color:#f5c518;margin-bottom:12px';
+
+  const categoria = document.createElement('p');
+  categoria.textContent = '🌱 ' + (artigo.category || 'Artigo');
+  categoria.style.cssText = 'color:#f5c518;margin-bottom:10px';
+
+  const data = document.createElement('p');
+  data.textContent = '📅 ' + new Date(artigo.created_at).toLocaleDateString('pt-BR');
+  data.style.cssText = 'color:#a3a696;font-size:12px;margin-bottom:20px';
+
+  const conteudo = document.createElement('p');
+  conteudo.textContent = artigo.content;
+  conteudo.style.cssText = 'line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere';
+
+  const fechar = document.createElement('button');
+  fechar.textContent = '✕ Fechar artigo';
+  fechar.className = 'header-button';
+  fechar.style.cssText = 'margin-top:25px;padding:12px';
+  fechar.onclick = () => fundo.remove();
+
+  caixa.append(titulo, categoria, data, conteudo, fechar);
+  fundo.appendChild(caixa);
+  fundo.onclick = (evento) => {
+    if (evento.target === fundo) fundo.remove();
+  };
+
+  document.body.appendChild(fundo);
+}
 </script>
 
 
