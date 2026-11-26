@@ -2825,10 +2825,23 @@ async function abrirChatPrivado(userId, nome) {
   document.getElementById('textoMensagemChat').value = '';
   document.getElementById('avisoChat').textContent = '';
 
-  mostrarSecao('chatPrivado');
 
-  await carregarMensagensChat();
-  iniciarAtualizacaoChat();
+mostrarSecao('chatPrivado');
+
+const { error: erroLeitura } = await supabaseClient
+  .from('messages')
+  .update({ read_at: new Date().toISOString() })
+  .eq('sender_id', userId)
+  .eq('receiver_id', user.id)
+  .is('read_at', null);
+
+if (erroLeitura) {
+  console.error('Erro ao marcar mensagens como lidas:', erroLeitura);
+}
+
+await carregarMensagensChat();
+iniciarAtualizacaoChat();
+  }
 }
 
 function voltarPerfilPublico() {
@@ -2980,7 +2993,7 @@ async function abrirMensagens() {
 
   const { data: mensagens, error } = await supabaseClient
     .from('messages')
-    .select('sender_id, receiver_id, content, created_at')
+    .select('sender_id, receiver_id, content, created_at, read_at')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
 
@@ -3025,6 +3038,20 @@ async function abrirMensagens() {
   idsUsuarios.forEach(id => {
     const perfil = (perfis || []).find(p => p.id === id);
     const ultima = ultimasConversas.get(id);
+const naoLidas = (mensagens || []).filter(m =>
+  m.sender_id === id &&
+  m.receiver_id === user.id &&
+  !m.read_at
+).length;
+
+const indicador = document.createElement('span');
+
+if (naoLidas > 0) {
+  indicador.textContent = naoLidas;
+  indicador.style.cssText =
+    'background:#f5c518;color:#151512;border-radius:50%;min-width:25px;height:25px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;padding:4px';
+}
+    
 
     const nome = perfil?.full_name || perfil?.username || 'Usuário';
     const foto = perfil?.avatar_url ||
@@ -3056,7 +3083,11 @@ async function abrirMensagens() {
     data.style.cssText = 'color:#888;font-size:10px';
 
     detalhes.append(nomeElemento, previa, data);
-    cartao.append(avatar, detalhes);
+   cartao.append(avatar, detalhes);
+
+if (naoLidas > 0) {
+  cartao.appendChild(indicador);
+}
 
     cartao.onclick = () => abrirChatPrivado(id, nome);
 
