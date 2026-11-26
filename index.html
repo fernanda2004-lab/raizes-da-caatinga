@@ -2077,11 +2077,12 @@ async function cadastrarUsuario() {
     email,
     password: senha,
     options: {
-      data: {
-        full_name: nome,
-        username: usuario
-      }
-    }
+  emailRedirectTo: 'https://fernanda2004-lab.github.io/raizes-da-caatinga/confirmacao.html',
+  data: {
+    full_name: nome,
+    username: usuario
+  }
+}
   });
 
   if (error) {
