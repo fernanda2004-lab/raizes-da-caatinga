@@ -930,7 +930,7 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   <p class="post-content">Um espaço para conhecer outros meliponicultores e trocar experiências sobre a criação de abelhas sem ferrão.</p>
 </section>
 <section id="meuPerfil" data-secao="meuPerfil" class="card" style="display:none">
-<button class="header-button" onclick="mostrarSecao('inicio')" style="margin-bottom:15px">
+<button class="header-button"onclick="mostrarSecao(secaoAnteriorPerfil)" style="margin-bottom:15px">
   ← Voltar
 </button>
   <h3 class="side-title">👤 Meu perfil</h3>
@@ -1872,7 +1872,7 @@ async function carregarVideos() {
             </p>
           </div>
 
-          <button onclick="abrirPerfilPublico('${escapar(video.user_id)}')"
+          <button onclick="secaoAnteriorPerfil='videos'; abrirPerfilPublico('${escapar(video.user_id)}')"
             class="header-button">
             👤 Olhar perfil
           </button>
@@ -2421,7 +2421,7 @@ async function carregarArtigos() {
           </div>
 
           <button class="header-button"
-            onclick="abrirPerfilPublico('${escapar(artigo.user_id)}')">
+          onclick="secaoAnteriorPerfil='artigos'; abrirPerfilPublico('${escapar(artigo.user_id)}')">
             👤 Olhar perfil
           </button>
         </div>
@@ -2661,11 +2661,14 @@ async function carregarMinhasPublicacoes(userId) {
     lista.appendChild(card);
   });
 }
-
+let secaoAnteriorPerfil = 'inicio';
 async function abrirPerfilPublico(userId) {
   const lista = document.getElementById('publicacoesPerfilPublico');
 
-  mostrarSecao('perfilPublico');
+ if (['artigos', 'videos'].includes(secaoAnteriorPerfil) === false) {
+  secaoAnteriorPerfil = 'inicio';
+}
+mostrarSecao('perfilPublico');
 
   lista.innerHTML = '<p style="color:#a3a696">Carregando perfil...</p>';
 
