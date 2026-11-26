@@ -1170,6 +1170,127 @@ window.supabaseClient = window.supabase.createClient(
 );
 
 console.log('Supabase conectado!');
+  async function publicar() {
+  const texto = document.getElementById('texto');
+  const conteudo = texto.value.trim();
+
+  if (!conteudo) {
+    alert('Escreva algo antes de publicar!');
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    abrirLogin();
+    return;
+  }
+
+  const botao = document.querySelector('.post-button');
+  botao.disabled = true;
+  botao.textContent = 'Publicando...';
+
+  const { error } = await supabaseClient
+    .from('posts')
+    .insert({
+      user_id: user.id,
+      content: conteudo
+    });
+
+  botao.disabled = false;
+  botao.textContent = 'Publicar';
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao publicar: ' + error.message);
+    return;
+  }
+
+  texto.value = '';
+  await carregarPosts();
+}
+async function carregarPosts() {
+  const lista = document.getElementById('novas-publicacoes');
+
+  const { data: posts, error } = await supabaseClient
+    .from('posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    lista.textContent = 'Não foi possível carregar as publicações.';
+    return;
+  }
+
+  lista.innerHTML = '';
+
+  if (!posts || posts.length === 0) {
+    lista.innerHTML = `
+      <p style="color:#a3a696;text-align:center;padding:20px">
+        🐝 Nenhuma publicação ainda. Seja o primeiro!
+      </p>
+    `;
+    return;
+  }
+
+  const idsUsuarios = [...new Set(posts.map(post => post.user_id))];
+
+  const { data: perfis, error: erroPerfis } = await supabaseClient
+    .from('profiles')
+    .select('id, full_name, username, avatar_url')
+    .in('id', idsUsuarios);
+
+  if (erroPerfis) console.error(erroPerfis);
+
+  const mapaPerfis = Object.fromEntries(
+    (perfis || []).map(perfil => [perfil.id, perfil])
+  );
+
+  posts.forEach(post => {
+    const perfil = mapaPerfis[post.user_id] || {};
+    const nome = perfil.full_name || perfil.username || 'Meliponicultor';
+    const foto = perfil.avatar_url ||
+      'https://cdn-icons-png.flaticon.com/512/616/616490.png';
+
+    const artigo = document.createElement('article');
+    artigo.className = 'card';
+    artigo.style.marginTop = '15px';
+
+    const cabecalho = document.createElement('div');
+    cabecalho.className = 'post-header';
+
+    const avatar = document.createElement('img');
+    avatar.className = 'post-avatar';
+    avatar.src = foto;
+    avatar.alt = 'Foto de ' + nome;
+    avatar.style.objectFit = 'cover';
+
+    const autor = document.createElement('div');
+
+    const nomeAutor = document.createElement('strong');
+    nomeAutor.textContent = nome;
+
+    const data = document.createElement('small');
+    data.textContent = new Date(post.created_at).toLocaleString('pt-BR');
+
+    autor.append(nomeAutor, data);
+    cabecalho.append(avatar, autor);
+
+    const conteudo = document.createElement('div');
+    conteudo.className = 'post-content';
+    conteudo.textContent = post.content;
+
+    artigo.append(cabecalho, conteudo);
+    lista.appendChild(artigo);
+  });
+}
+
+carregarPosts();
+
+
+
+  
 
 function abrirCadastro() {
   document.getElementById('modalCadastro').style.display = 'flex';
