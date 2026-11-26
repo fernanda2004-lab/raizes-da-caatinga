@@ -1058,6 +1058,21 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   <p id="avisoChat" style="color:#f5c518;font-size:12px;margin-top:8px"></p>
 
 </section>
+    
+<section id="listaMensagens" data-secao="listaMensagens" class="card" style="display:none">
+
+  <h3 style="color:#f5c518;margin-bottom:18px">
+    ✉️ Minhas mensagens
+  </h3>
+
+  <div id="listaConversas">
+    <p style="color:#a3a696;text-align:center">
+      Carregando conversas...
+    </p>
+  </div>
+
+</section>
+
   </main>
 
   <aside class="right-sidebar">
@@ -2947,6 +2962,106 @@ function pararAtualizacaoChat() {
     clearInterval(atualizacaoChat);
     atualizacaoChat = null;
   }
+}
+
+async function abrirMensagens() {
+  const area = document.getElementById('listaConversas');
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    abrirLogin();
+    return;
+  }
+
+  mostrarSecao('listaMensagens');
+
+  area.innerHTML = '<p style="color:#a3a696">Carregando conversas...</p>';
+
+  const { data: mensagens, error } = await supabaseClient
+    .from('messages')
+    .select('sender_id, receiver_id, content, created_at')
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    area.textContent = 'Não foi possível carregar as conversas.';
+    return;
+  }
+
+  const ultimasConversas = new Map();
+
+  (mensagens || []).forEach(mensagem => {
+    const outroUsuario = mensagem.sender_id === user.id
+      ? mensagem.receiver_id
+      : mensagem.sender_id;
+
+    if (!ultimasConversas.has(outroUsuario)) {
+      ultimasConversas.set(outroUsuario, mensagem);
+    }
+  });
+
+  const idsUsuarios = [...ultimasConversas.keys()];
+
+  if (idsUsuarios.length === 0) {
+    area.innerHTML = '<p style="color:#a3a696;text-align:center;padding:20px">Você ainda não tem conversas. Visite o perfil de alguém para começar!</p>';
+    return;
+  }
+
+  const { data: perfis, error: erroPerfis } = await supabaseClient
+    .from('profiles')
+    .select('id, full_name, username, avatar_url')
+    .in('id', idsUsuarios);
+
+  if (erroPerfis) {
+    console.error(erroPerfis);
+    area.textContent = 'Não foi possível carregar os perfis.';
+    return;
+  }
+
+  area.innerHTML = '';
+
+  idsUsuarios.forEach(id => {
+    const perfil = (perfis || []).find(p => p.id === id);
+    const ultima = ultimasConversas.get(id);
+
+    const nome = perfil?.full_name || perfil?.username || 'Usuário';
+    const foto = perfil?.avatar_url ||
+      'https://cdn-icons-png.flaticon.com/512/616/616490.png';
+
+    const cartao = document.createElement('button');
+    cartao.type = 'button';
+    cartao.style.cssText = 'display:flex;align-items:center;gap:12px;width:100%;padding:12px;margin-bottom:10px;background:#1c2017;border:1px solid #292921;border-radius:10px;color:#f5f5ed;text-align:left;cursor:pointer';
+
+    const avatar = document.createElement('img');
+    avatar.src = foto;
+    avatar.onerror = function() {
+      this.src = 'https://cdn-icons-png.flaticon.com/512/616/616490.png';
+    };
+    avatar.style.cssText = 'width:48px;height:48px;border-radius:50%;object-fit:cover';
+
+    const detalhes = document.createElement('div');
+    detalhes.style.flex = '1';
+
+    const nomeElemento = document.createElement('strong');
+    nomeElemento.textContent = nome;
+
+    const previa = document.createElement('p');
+    previa.textContent = ultima.content;
+    previa.style.cssText = 'color:#a3a696;font-size:12px;margin-top:5px';
+
+    const data = document.createElement('small');
+    data.textContent = new Date(ultima.created_at).toLocaleString('pt-BR');
+    data.style.cssText = 'color:#888;font-size:10px';
+
+    detalhes.append(nomeElemento, previa, data);
+    cartao.append(avatar, detalhes);
+
+    cartao.onclick = () => abrirChatPrivado(id, nome);
+
+    area.appendChild(cartao);
+  });
 }
 
   
