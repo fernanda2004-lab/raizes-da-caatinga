@@ -3576,6 +3576,119 @@ async function iniciarMapaMeliponarios() {
 
   if (!areaMapa || !window.L) return;
 
+  // Locais divulgados publicamente.
+  // As coordenadas indicam aproximadamente o centro da cidade.
+  const locais = [
+    {
+      cidade: 'Recife',
+      estado: 'PE',
+      latitude: -8.063,
+      longitude: -34.872,
+      nomes: ['Meliponário Abelhas de Chã']
+    },
+    {
+      cidade: 'Mossoró',
+      estado: 'RN',
+      latitude: -5.188,
+      longitude: -37.344,
+      nomes: ['Mangangá - Mel Puro']
+    },
+    {
+      cidade: 'São Paulo',
+      estado: 'SP',
+      latitude: -23.548,
+      longitude: -46.638,
+      nomes: ['Meliponário São Paulo']
+    },
+    {
+      cidade: 'Joinville',
+      estado: 'SC',
+      latitude: -26.304,
+      longitude: -48.848,
+      nomes: ['Meliponário Urbano Paraíso das Nativas']
+    },
+    {
+      cidade: 'Teresina',
+      estado: 'PI',
+      latitude: -5.092,
+      longitude: -42.803,
+      nomes: ['Gil Abelhas Nativas']
+    },
+    {
+      cidade: 'João Pessoa',
+      estado: 'PB',
+      latitude: -7.120,
+      longitude: -34.880,
+      nomes: [
+        'Meliponário Jardim Botânico',
+        'Meliponário Cantinhos das Abelhas'
+      ]
+    },
+    {
+      cidade: 'Curitiba',
+      estado: 'PR',
+      latitude: -25.415,
+      longitude: -49.265,
+      nomes: ['Abelhas Sem Ferrão Curitiba']
+    },
+    {
+      cidade: 'Florianópolis',
+      estado: 'SC',
+      latitude: -27.597,
+      longitude: -48.549,
+      nomes: ['Meliponário - Abelhas sem ferrão']
+    },
+    {
+      cidade: 'Guaramiranga',
+      estado: 'CE',
+      latitude: -4.262,
+      longitude: -38.932,
+      nomes: ['Meliponário Cantinho do Céu']
+    },
+    {
+      cidade: 'Brasília',
+      estado: 'DF',
+      latitude: -15.780,
+      longitude: -47.930,
+      nomes: ['Meliponário Itaipu']
+    },
+    {
+      cidade: 'Lauro de Freitas',
+      estado: 'BA',
+      latitude: -12.894,
+      longitude: -38.327,
+      nomes: ['Meliponário Beija Flor']
+    },
+    {
+      cidade: 'Cotia',
+      estado: 'SP',
+      latitude: -23.603,
+      longitude: -46.919,
+      nomes: ['Meliponário Pai e Filhos']
+    },
+    {
+      cidade: 'Campinas',
+      estado: 'SP',
+      latitude: -22.905,
+      longitude: -47.060,
+      nomes: ['Meliponário Mambuca']
+    },
+    {
+      cidade: 'Niterói',
+      estado: 'RJ',
+      latitude: -22.883,
+      longitude: -43.103,
+      nomes: ['Meliponário & Apiário Recanto das Nativas']
+    },
+    {
+      cidade: 'Jardim do Seridó',
+      estado: 'RN',
+      latitude: -6.584,
+      longitude: -36.774,
+      nomes: ['Fábrica de Abelhas']
+    }
+  ];
+
   if (!mapaMeliponarios) {
     mapaMeliponarios = L.map('mapaMeliponarios').setView([-14.2, -51.9], 4);
 
@@ -3586,19 +3699,7 @@ async function iniciarMapaMeliponarios() {
 
   setTimeout(() => mapaMeliponarios.invalidateSize(), 200);
 
-  mensagem.textContent = 'Buscando meliponários cadastrados...';
-
-  const { data, error } = await supabaseClient
-    .from('meliponarios')
-    .select('*')
-    .order('criado_em', { ascending: false });
-
-  if (error) {
-    mensagem.textContent = 'Erro ao carregar os meliponários.';
-    console.error(error);
-    return;
-  }
-
+  // Remove os marcadores antigos antes de carregar novamente.
   mapaMeliponarios.eachLayer(camada => {
     if (camada instanceof L.Marker) {
       mapaMeliponarios.removeLayer(camada);
@@ -3607,61 +3708,60 @@ async function iniciarMapaMeliponarios() {
 
   lista.innerHTML = '';
 
-  if (!data || data.length === 0) {
-    mensagem.textContent = 'Ainda não há meliponários cadastrados.';
-    lista.innerHTML = '<p style="color:#a3a696">Seja o primeiro a cadastrar um meliponário!</p>';
-    return;
-  }
+  const iconeAbelha = L.divIcon({
+    html: '<span style="font-size:27px">🐝</span>',
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
 
-  data.forEach(item => {
-    if (!Number.isFinite(Number(item.latitude)) ||
-        !Number.isFinite(Number(item.longitude))) return;
-
-    const iconeAbelha = L.divIcon({
-      html: '<span style="font-size:27px">🐝</span>',
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
-    });
-
+  locais.forEach(item => {
     const marcador = L.marker(
-      [Number(item.latitude), Number(item.longitude)],
+      [item.latitude, item.longitude],
       { icon: iconeAbelha }
     ).addTo(mapaMeliponarios);
 
     const popup = document.createElement('div');
+
     const titulo = document.createElement('strong');
-    titulo.textContent = item.nome;
-    const local = document.createElement('p');
-    local.textContent = item.cidade + ' - ' + item.estado;
-    const especies = document.createElement('p');
-    especies.textContent = 'Espécies: ' + (item.especies || []).join(', ');
+    titulo.textContent = '🐝 ' + item.cidade + ' - ' + item.estado;
+    popup.appendChild(titulo);
 
-    popup.append(titulo, local, especies);
+    item.nomes.forEach(nomeMeliponario => {
+      const nome = document.createElement('p');
+      nome.textContent = nomeMeliponario;
+      nome.style.margin = '8px 0';
+      popup.appendChild(nome);
+    });
 
-    if (item.verificado) {
-      const selo = document.createElement('p');
-      selo.textContent = '✓ Registro verificado';
-      popup.appendChild(selo);
-    }
+    const aviso = document.createElement('p');
+    aviso.textContent =
+      'Divulgação pública. Localização aproximada da cidade; não indica o endereço exato do meliponário.';
+    aviso.style.fontSize = '11px';
+    aviso.style.color = '#777';
+    popup.appendChild(aviso);
 
     marcador.bindPopup(popup);
 
     const cartao = document.createElement('div');
-    cartao.style.cssText = 'background:#1c2017;padding:15px;border-radius:10px;margin-bottom:10px;color:#f5f5ed;cursor:pointer';
+    cartao.style.cssText =
+      'background:#1c2017;padding:15px;border-radius:10px;margin-bottom:10px;color:#f5f5ed;cursor:pointer;border:1px solid #292921';
 
-    const nome = document.createElement('strong');
-    nome.textContent = '🐝 ' + item.nome;
+    const nomeCidade = document.createElement('strong');
+    nomeCidade.textContent = '🐝 ' + item.cidade + ' - ' + item.estado;
+    cartao.appendChild(nomeCidade);
 
-    const endereco = document.createElement('p');
-    endereco.textContent = item.cidade + ' - ' + item.estado;
-    endereco.style.color = '#a3a696';
-
-    cartao.append(nome, endereco);
+    item.nomes.forEach(nomeMeliponario => {
+      const nome = document.createElement('p');
+      nome.textContent = nomeMeliponario;
+      nome.style.cssText = 'color:#a3a696;font-size:13px;margin-top:6px';
+      cartao.appendChild(nome);
+    });
 
     cartao.onclick = () => {
       mapaMeliponarios.setView(
-        [Number(item.latitude), Number(item.longitude)], 12
+        [item.latitude, item.longitude],
+        11
       );
       marcador.openPopup();
     };
@@ -3669,7 +3769,8 @@ async function iniciarMapaMeliponarios() {
     lista.appendChild(cartao);
   });
 
-  mensagem.textContent = data.length + ' meliponário(s) encontrado(s).';
+  mensagem.textContent =
+    locais.length + ' cidades com meliponários divulgados publicamente.';
 }
 </script>
 </body>
