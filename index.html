@@ -930,7 +930,9 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   <p class="post-content">Um espaço para conhecer outros meliponicultores e trocar experiências sobre a criação de abelhas sem ferrão.</p>
 </section>
 <section id="meuPerfil" data-secao="meuPerfil" class="card" style="display:none">
-
+<button class="header-button" onclick="mostrarSecao('inicio')" style="margin-bottom:15px">
+  ← Voltar
+</button>
   <h3 class="side-title">👤 Meu perfil</h3>
 
   <div style="text-align:center;padding:20px">
@@ -1023,7 +1025,11 @@ Vamos fortalecer a meliponicultura brasileira! 💛
 </section>  
 
 <section id="chatPrivado" data-secao="chatPrivado" class="card" style="display:none">
+<button class="header-button" onclick="mostrarSecao('inicio')" style="margin-bottom:15px">
+  ← Voltar
+</button>
 
+  
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <button class="header-button" onclick="voltarPerfilPublico()">
       ← Voltar
@@ -1060,7 +1066,10 @@ Vamos fortalecer a meliponicultura brasileira! 💛
 </section>
     
 <section id="listaMensagens" data-secao="listaMensagens" class="card" style="display:none">
-
+<button class="header-button" onclick="mostrarSecao('inicio')" style="margin-bottom:15px">
+  ← Voltar
+</button>
+  
   <h3 style="color:#f5c518;margin-bottom:18px">
     ✉️ Minhas mensagens
   </h3>
@@ -1119,6 +1128,9 @@ function curtir(botao) {
 
 
 function mostrarSecao(secao, item) {
+    if (secao !== 'chatPrivado' && typeof pararAtualizacaoChat === 'function') {
+    pararAtualizacaoChat();
+  }
   // Remove a seleção de todos os botões
   document.querySelectorAll(".menu li, .menu-topo a").forEach(menu => {
     menu.classList.remove("active");
@@ -1142,14 +1154,6 @@ function mostrarSecao(secao, item) {
   }
 }
 
-
-
-
-
-
-
-
-  
 function compartilhar() {
   if (navigator.share) {
     navigator.share({
