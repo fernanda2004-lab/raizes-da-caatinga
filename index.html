@@ -2367,9 +2367,61 @@ async function abrirMeuPerfil() {
 
   const fotoGrande = document.getElementById('fotoPerfilGrande');
 
- fotoGrande.src = foto ||
+fotoGrande.src = foto ||
   'https://cdn-icons-png.flaticon.com/512/616/616490.png';
+
+  await carregarMinhasPublicacoes(user.id);
 }
+
+async function carregarMinhasPublicacoes(userId) {
+  const lista = document.getElementById('minhasPublicacoes');
+
+  if (!lista) return;
+
+  lista.innerHTML = '<p style="color:#a3a696">Carregando publicações...</p>';
+
+  const { data: posts, error } = await supabaseClient
+    .from('posts')
+    .select('id, content, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    lista.textContent = 'Não foi possível carregar suas publicações.';
+    return;
+  }
+
+  lista.innerHTML = '';
+
+  if (!posts || posts.length === 0) {
+    lista.innerHTML = `
+      <p style="color:#a3a696">
+        Você ainda não fez nenhuma publicação.
+      </p>
+    `;
+    return;
+  }
+
+  posts.forEach(post => {
+    const artigo = document.createElement('article');
+    artigo.className = 'card';
+    artigo.style.marginBottom = '12px';
+
+    const conteudo = document.createElement('p');
+    conteudo.textContent = post.content;
+    conteudo.style.color = '#f5f5ed';
+
+    const data = document.createElement('small');
+    data.textContent = new Date(post.created_at).toLocaleString('pt-BR');
+    data.style.color = '#a3a696';
+
+    artigo.append(conteudo, data);
+    lista.appendChild(artigo);
+  });
+}
+
+  
 
 carregarArtigos();
   
