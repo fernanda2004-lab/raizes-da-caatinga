@@ -590,6 +590,7 @@ header nav,
 }
 </style>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 
 <body>
@@ -1034,9 +1035,45 @@ header nav,
 </section>
 
 
+
 <section id="meliponarios" data-secao="meliponarios" class="card" style="display:none">
-  <h3 class="side-title">🌵 Meliponários</h3>
-  <p class="post-content">Conheça meliponários, estruturas e experiências de criadores de abelhas nativas.</p>
+
+  <h2 style="color:#f5c518;font-size:24px;margin-bottom:10px">
+    🐝 Mapa de Meliponários do Brasil
+  </h2>
+
+  <p style="color:#a3a696;line-height:1.7;margin-bottom:18px">
+    Explore os meliponários cadastrados pela comunidade em todo o Brasil.
+    Clique nas abelhinhas para conhecer cada local.
+  </p>
+
+  <div style="background:#1c2017;border:1px solid #292921;border-radius:12px;padding:12px;margin-bottom:15px">
+    <div style="color:#f5c518;font-weight:bold;margin-bottom:6px">
+      🐝 Localização dos meliponários
+    </div>
+    <p style="color:#a3a696;font-size:13px">
+      Os pontos aparecerão conforme novos meliponários forem cadastrados.
+    </p>
+  </div>
+
+  <div id="mapaMeliponarios"
+    style="width:100%;height:450px;border-radius:12px;border:1px solid #292921;background:#1c2017;z-index:1">
+  </div>
+
+  <p id="mensagemMapaMeliponarios"
+    style="color:#f5c518;text-align:center;margin-top:12px;font-size:13px">
+    Preparando o mapa...
+  </p>
+
+  <div style="margin-top:22px">
+    <h3 style="color:#f5c518;margin-bottom:12px">
+      📍 Meliponários cadastrados
+    </h3>
+    <div id="listaMeliponarios">
+      <p style="color:#a3a696">Os locais cadastrados aparecerão aqui.</p>
+    </div>
+  </div>
+
 </section>
 
 <section id="comunidade" data-secao="comunidade" class="card" style="display:none">
@@ -1274,7 +1311,10 @@ function mostrarSecao(secao, item) {
   if (destino) {
     destino.style.display = "block";
   }
+if (secao === 'meliponarios' && typeof iniciarMapaMeliponarios === 'function') {
+  setTimeout(iniciarMapaMeliponarios, 200);
 }
+} 
 
   
 function compartilhar() {
@@ -3525,5 +3565,113 @@ async function salvarEdicaoArtigo(id) {
 
   
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let mapaMeliponarios = null;
+
+async function iniciarMapaMeliponarios() {
+  const areaMapa = document.getElementById('mapaMeliponarios');
+  const mensagem = document.getElementById('mensagemMapaMeliponarios');
+  const lista = document.getElementById('listaMeliponarios');
+
+  if (!areaMapa || !window.L) return;
+
+  if (!mapaMeliponarios) {
+    mapaMeliponarios = L.map('mapaMeliponarios').setView([-14.2, -51.9], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(mapaMeliponarios);
+  }
+
+  setTimeout(() => mapaMeliponarios.invalidateSize(), 200);
+
+  mensagem.textContent = 'Buscando meliponários cadastrados...';
+
+  const { data, error } = await supabaseClient
+    .from('meliponarios')
+    .select('*')
+    .order('criado_em', { ascending: false });
+
+  if (error) {
+    mensagem.textContent = 'Erro ao carregar os meliponários.';
+    console.error(error);
+    return;
+  }
+
+  mapaMeliponarios.eachLayer(camada => {
+    if (camada instanceof L.Marker) {
+      mapaMeliponarios.removeLayer(camada);
+    }
+  });
+
+  lista.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    mensagem.textContent = 'Ainda não há meliponários cadastrados.';
+    lista.innerHTML = '<p style="color:#a3a696">Seja o primeiro a cadastrar um meliponário!</p>';
+    return;
+  }
+
+  data.forEach(item => {
+    if (!Number.isFinite(Number(item.latitude)) ||
+        !Number.isFinite(Number(item.longitude))) return;
+
+    const iconeAbelha = L.divIcon({
+      html: '<span style="font-size:27px">🐝</span>',
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    const marcador = L.marker(
+      [Number(item.latitude), Number(item.longitude)],
+      { icon: iconeAbelha }
+    ).addTo(mapaMeliponarios);
+
+    const popup = document.createElement('div');
+    const titulo = document.createElement('strong');
+    titulo.textContent = item.nome;
+    const local = document.createElement('p');
+    local.textContent = item.cidade + ' - ' + item.estado;
+    const especies = document.createElement('p');
+    especies.textContent = 'Espécies: ' + (item.especies || []).join(', ');
+
+    popup.append(titulo, local, especies);
+
+    if (item.verificado) {
+      const selo = document.createElement('p');
+      selo.textContent = '✓ Registro verificado';
+      popup.appendChild(selo);
+    }
+
+    marcador.bindPopup(popup);
+
+    const cartao = document.createElement('div');
+    cartao.style.cssText = 'background:#1c2017;padding:15px;border-radius:10px;margin-bottom:10px;color:#f5f5ed;cursor:pointer';
+
+    const nome = document.createElement('strong');
+    nome.textContent = '🐝 ' + item.nome;
+
+    const endereco = document.createElement('p');
+    endereco.textContent = item.cidade + ' - ' + item.estado;
+    endereco.style.color = '#a3a696';
+
+    cartao.append(nome, endereco);
+
+    cartao.onclick = () => {
+      mapaMeliponarios.setView(
+        [Number(item.latitude), Number(item.longitude)], 12
+      );
+      marcador.openPopup();
+    };
+
+    lista.appendChild(cartao);
+  });
+
+  mensagem.textContent = data.length + ' meliponário(s) encontrado(s).';
+}
+</script>
 </body>
 </html>
