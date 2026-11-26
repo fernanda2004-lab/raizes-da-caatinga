@@ -2373,6 +2373,7 @@ fotoGrande.src = foto ||
   await carregarMinhasPublicacoes(user.id);
 }
 
+
 async function carregarMinhasPublicacoes(userId) {
   const lista = document.getElementById('minhasPublicacoes');
 
@@ -2380,21 +2381,61 @@ async function carregarMinhasPublicacoes(userId) {
 
   lista.innerHTML = '<p style="color:#a3a696">Carregando publicações...</p>';
 
-  const { data: posts, error } = await supabaseClient
-    .from('posts')
-    .select('id, content, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const [resultadoPosts, resultadoVideos, resultadoArtigos] =
+    await Promise.all([
+      supabaseClient
+        .from('posts')
+        .select('id, content, created_at')
+        .eq('user_id', userId),
 
-  if (error) {
-    console.error(error);
-    lista.textContent = 'Não foi possível carregar suas publicações.';
+      supabaseClient
+        .from('videos')
+        .select('id, title, description, video_url, created_at')
+        .eq('user_id', userId),
+
+      supabaseClient
+        .from('articles')
+        .select('id, title, category, content, created_at')
+        .eq('user_id', userId)
+    ]);
+
+  if (resultadoPosts.error || resultadoVideos.error || resultadoArtigos.error) {
+    console.error(
+      resultadoPosts.error,
+      resultadoVideos.error,
+      resultadoArtigos.error
+    );
+    lista.textContent = 'Não foi possível carregar todo o seu conteúdo.';
     return;
   }
 
+  const publicacoes = [
+    ...(resultadoPosts.data || []).map(item => ({
+      ...item,
+      tipo: 'Texto',
+      data: item.created_at
+    })),
+
+    ...(resultadoVideos.data || []).map(item => ({
+      ...item,
+      tipo: 'Vídeo',
+      data: item.created_at
+    })),
+
+    ...(resultadoArtigos.data || []).map(item => ({
+      ...item,
+      tipo: 'Artigo',
+      data: item.created_at
+    }))
+  ];
+
+  publicacoes.sort((a, b) =>
+    new Date(b.data) - new Date(a.data)
+  );
+
   lista.innerHTML = '';
 
-  if (!posts || posts.length === 0) {
+  if (publicacoes.length === 0) {
     lista.innerHTML = `
       <p style="color:#a3a696">
         Você ainda não fez nenhuma publicação.
@@ -2403,21 +2444,83 @@ async function carregarMinhasPublicacoes(userId) {
     return;
   }
 
-  posts.forEach(post => {
-    const artigo = document.createElement('article');
-    artigo.className = 'card';
-    artigo.style.marginBottom = '12px';
+  publicacoes.forEach(item => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.style.marginBottom = '12px';
 
-    const conteudo = document.createElement('p');
-    conteudo.textContent = post.content;
-    conteudo.style.color = '#f5f5ed';
+    const tipo = document.createElement('strong');
+    tipo.textContent =
+      item.tipo === 'Vídeo' ? '🎬 Vídeo' :
+      item.tipo === 'Artigo' ? '📚 Artigo' : '🐝 Publicação';
+
+    tipo.style.color = '#f5c518';
+
+    card.appendChild(tipo);
+
+    if (item.tipo === 'Texto') {
+      const conteudo = document.createElement('p');
+      conteudo.textContent = item.content;
+      conteudo.style.color = '#f5f5ed';
+      conteudo.style.marginTop = '10px';
+      card.appendChild(conteudo);
+    }
+
+    if (item.tipo === 'Vídeo') {
+      const titulo = document.createElement('h4');
+      titulo.textContent = item.title || 'Vídeo sem título';
+      titulo.style.color = '#f5f5ed';
+      titulo.style.marginTop = '10px';
+      card.appendChild(titulo);
+
+      if (item.video_url) {
+        const video = document.createElement('video');
+        video.src = item.video_url;
+        video.controls = true;
+        video.preload = 'metadata';
+        video.style.width = '100%';
+        video.style.maxHeight = '300px';
+        video.style.marginTop = '10px';
+        video.style.borderRadius = '10px';
+        card.appendChild(video);
+      }
+
+      if (item.description) {
+        const descricao = document.createElement('p');
+        descricao.textContent = item.description;
+        descricao.style.color = '#f5f5ed';
+        descricao.style.marginTop = '8px';
+        card.appendChild(descricao);
+      }
+    }
+
+    if (item.tipo === 'Artigo') {
+      const titulo = document.createElement('h4');
+      titulo.textContent = item.title || 'Artigo sem título';
+      titulo.style.color = '#f5f5ed';
+      titulo.style.marginTop = '10px';
+      card.appendChild(titulo);
+
+      const categoria = document.createElement('p');
+      categoria.textContent = item.category || '';
+      categoria.style.color = '#f5c518';
+      card.appendChild(categoria);
+
+      const conteudo = document.createElement('p');
+      conteudo.textContent = item.content || '';
+      conteudo.style.color = '#f5f5ed';
+      conteudo.style.marginTop = '8px';
+      card.appendChild(conteudo);
+    }
 
     const data = document.createElement('small');
-    data.textContent = new Date(post.created_at).toLocaleString('pt-BR');
+    data.textContent = new Date(item.data).toLocaleString('pt-BR');
+    data.style.display = 'block';
     data.style.color = '#a3a696';
+    data.style.marginTop = '12px';
 
-    artigo.append(conteudo, data);
-    lista.appendChild(artigo);
+    card.appendChild(data);
+    lista.appendChild(card);
   });
 }
 
