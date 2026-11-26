@@ -984,6 +984,44 @@ Vamos fortalecer a meliponicultura brasileira! 💛
   </div>
 
 </section>
+
+<section id="perfilPublico" data-secao="perfilPublico" class="card" style="display:none">
+
+  <h3 class="side-title">👤 Perfil do usuário</h3>
+
+  <div style="text-align:center;padding:20px">
+
+    <img id="fotoPerfilPublico" src=""
+      style="width:110px;height:110px;border-radius:50%;object-fit:cover;background:#292921;border:3px solid #f5c518">
+
+    <h2 id="nomePerfilPublico" style="color:#f5c518;margin-top:12px">
+      Nome do usuário
+    </h2>
+
+    <p id="usuarioPerfilPublico" style="color:#a3a696;margin-top:5px">
+      @usuario
+    </p>
+
+    <p id="bioPerfilPublico" style="color:#f5f5ed;margin-top:15px">
+      Biografia do usuário
+    </p>
+
+    <button id="botaoChatPrivado" class="header-button"
+      style="margin-top:20px">
+      💬 Conversar no privado
+    </button>
+
+  </div>
+
+  <div style="border-top:1px solid #292921;padding-top:20px;margin-top:15px">
+    <h3 style="color:#f5c518;margin-bottom:15px">
+      Publicações deste usuário
+    </h3>
+
+    <div id="publicacoesPerfilPublico"></div>
+  </div>
+
+</section>  
   </main>
 
   <aside class="right-sidebar">
@@ -2558,6 +2596,147 @@ async function carregarMinhasPublicacoes(userId) {
 
     const data = document.createElement('small');
     data.textContent = new Date(item.data).toLocaleString('pt-BR');
+    data.style.display = 'block';
+    data.style.color = '#a3a696';
+    data.style.marginTop = '12px';
+
+    card.appendChild(data);
+    lista.appendChild(card);
+  });
+}
+
+async function abrirPerfilPublico(userId) {
+  const lista = document.getElementById('publicacoesPerfilPublico');
+
+  mostrarSecao('perfilPublico');
+
+  lista.innerHTML = '<p style="color:#a3a696">Carregando perfil...</p>';
+
+  const { data: perfil, error: erroPerfil } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (erroPerfil || !perfil) {
+    lista.textContent = 'Não foi possível carregar este perfil.';
+    return;
+  }
+
+  document.getElementById('nomePerfilPublico').textContent =
+    perfil.full_name || 'Meliponicultor';
+
+  document.getElementById('usuarioPerfilPublico').textContent =
+    perfil.username ? '@' + perfil.username : '@usuario';
+
+  document.getElementById('bioPerfilPublico').textContent =
+    perfil.bio || 'Este usuário ainda não adicionou uma biografia.';
+
+  document.getElementById('fotoPerfilPublico').src =
+    perfil.avatar_url ||
+    'https://cdn-icons-png.flaticon.com/512/616/616490.png';
+
+  // O chat será ativado quando configurarmos as mensagens privadas.
+  document.getElementById('botaoChatPrivado').style.display = 'none';
+
+  const [posts, videos, artigos] = await Promise.all([
+    supabaseClient.from('posts')
+      .select('content, created_at')
+      .eq('user_id', userId),
+
+    supabaseClient.from('videos')
+      .select('title, description, video_url, created_at')
+      .eq('user_id', userId),
+
+    supabaseClient.from('articles')
+      .select('title, category, content, created_at')
+      .eq('user_id', userId)
+  ]);
+
+  if (posts.error || videos.error || artigos.error) {
+    console.error(posts.error, videos.error, artigos.error);
+    lista.textContent = 'Erro ao carregar as publicações.';
+    return;
+  }
+
+  const conteudos = [
+    ...(posts.data || []).map(item => ({ ...item, tipo: 'Texto' })),
+    ...(videos.data || []).map(item => ({ ...item, tipo: 'Vídeo' })),
+    ...(artigos.data || []).map(item => ({ ...item, tipo: 'Artigo' }))
+  ].sort((a, b) =>
+    new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  lista.innerHTML = '';
+
+  if (conteudos.length === 0) {
+    lista.textContent = 'Este usuário ainda não fez publicações.';
+    return;
+  }
+
+  conteudos.forEach(item => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.style.marginBottom = '12px';
+
+    const tipo = document.createElement('strong');
+    tipo.style.color = '#f5c518';
+    tipo.textContent =
+      item.tipo === 'Texto' ? '🐝 Publicação' :
+      item.tipo === 'Vídeo' ? '🎬 Vídeo' : '📚 Artigo';
+
+    card.appendChild(tipo);
+
+    if (item.tipo === 'Texto') {
+      const texto = document.createElement('p');
+      texto.textContent = item.content;
+      texto.style.color = '#f5f5ed';
+      texto.style.marginTop = '10px';
+      card.appendChild(texto);
+    }
+
+    if (item.tipo === 'Vídeo') {
+      const titulo = document.createElement('h3');
+      titulo.textContent = item.title || 'Vídeo';
+      titulo.style.color = '#f5f5ed';
+      titulo.style.marginTop = '10px';
+      card.appendChild(titulo);
+
+      const video = document.createElement('video');
+      video.src = item.video_url;
+      video.controls = true;
+      video.preload = 'metadata';
+      video.style.width = '100%';
+      video.style.maxHeight = '280px';
+      video.style.marginTop = '10px';
+      card.appendChild(video);
+
+      const descricao = document.createElement('p');
+      descricao.textContent = item.description || '';
+      descricao.style.color = '#a3a696';
+      card.appendChild(descricao);
+    }
+
+    if (item.tipo === 'Artigo') {
+      const titulo = document.createElement('h3');
+      titulo.textContent = item.title || 'Artigo';
+      titulo.style.color = '#f5f5ed';
+      titulo.style.marginTop = '10px';
+      card.appendChild(titulo);
+
+      const categoria = document.createElement('p');
+      categoria.textContent = item.category || '';
+      categoria.style.color = '#f5c518';
+      card.appendChild(categoria);
+
+      const texto = document.createElement('p');
+      texto.textContent = item.content || '';
+      texto.style.color = '#f5f5ed';
+      card.appendChild(texto);
+    }
+
+    const data = document.createElement('small');
+    data.textContent = new Date(item.created_at).toLocaleString('pt-BR');
     data.style.display = 'block';
     data.style.color = '#a3a696';
     data.style.marginTop = '12px';
