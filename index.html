@@ -1130,22 +1130,24 @@ function curtir(botao) {
 
 
 function mostrarSecao(secao, item) {
-    if (secao !== 'chatPrivado' && typeof pararAtualizacaoChat === 'function') {
+
+  if (secao !== 'chatPrivado' && typeof pararAtualizacaoChat === 'function') {
     pararAtualizacaoChat();
   }
-  // Remove a seleção de todos os botões
+
+  // Remove o amarelo de todos os menus
   document.querySelectorAll(".menu li, .menu-topo a").forEach(menu => {
     menu.classList.remove("active");
   });
 
-  // Ativa somente o botão clicado
- const botaoAtivo = document.querySelector(
-  `.menu li[onclick*="mostrarSecao('${secao}'"], .menu-topo a[onclick*="mostrarSecao('${secao}'"]`
-);
+  // Procura o botão correspondente à seção
+  const botoes = document.querySelectorAll(".menu li, .menu-topo a");
 
-if (botaoAtivo) {
-  botaoAtivo.classList.add("active");
-}
+  botoes.forEach(botao => {
+    if (botao.getAttribute("onclick")?.includes(`'${secao}'`)) {
+      botao.classList.add("active");
+    }
+  });
 
   // Esconde todas as seções
   document.querySelectorAll("[data-secao]").forEach(area => {
@@ -1160,6 +1162,7 @@ if (botaoAtivo) {
   }
 }
 
+  
 function compartilhar() {
   if (navigator.share) {
     navigator.share({
