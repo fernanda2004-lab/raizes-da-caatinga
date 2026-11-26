@@ -1020,8 +1020,44 @@ Vamos fortalecer a meliponicultura brasileira! 💛
 
     <div id="publicacoesPerfilPublico"></div>
   </div>
-
 </section>  
+
+<section id="chatPrivado" data-secao="chatPrivado" class="card" style="display:none">
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+    <button class="header-button" onclick="voltarPerfilPublico()">
+      ← Voltar
+    </button>
+
+    <div>
+      <h3 id="nomeContatoChat" style="color:#f5c518">
+        Conversa privada
+      </h3>
+      <small style="color:#a3a696">🔒 Mensagens privadas</small>
+    </div>
+  </div>
+
+  <div id="mensagensChat"
+    style="height:350px;overflow-y:auto;background:#10110d;border:1px solid #292921;border-radius:10px;padding:12px;margin-bottom:12px">
+    <p style="color:#a3a696;text-align:center">
+      Carregando mensagens...
+    </p>
+  </div>
+
+  <div style="display:flex;gap:8px">
+    <input id="textoMensagemChat"
+      type="text"
+      placeholder="Digite sua mensagem..."
+      style="flex:1;min-width:0;padding:12px;border-radius:8px;background:#1c2017;color:white;border:1px solid #292921">
+
+    <button class="header-button" onclick="enviarMensagemChat()">
+      Enviar
+    </button>
+  </div>
+
+  <p id="avisoChat" style="color:#f5c518;font-size:12px;margin-top:8px"></p>
+
+</section>
   </main>
 
   <aside class="right-sidebar">
@@ -2636,8 +2672,13 @@ async function abrirPerfilPublico(userId) {
     perfil.avatar_url ||
     'https://cdn-icons-png.flaticon.com/512/616/616490.png';
 
-  // O chat será ativado quando configurarmos as mensagens privadas.
-  document.getElementById('botaoChatPrivado').style.display = 'none';
+  const botaoChat = document.getElementById('botaoChatPrivado');
+
+botaoChat.style.display = 'inline-block';
+
+botaoChat.onclick = function() {
+  abrirChatPrivado(userId, perfil.full_name || perfil.username || 'Usuário');
+};
 
   const [posts, videos, artigos] = await Promise.all([
     supabaseClient.from('posts')
@@ -2744,6 +2785,168 @@ async function abrirPerfilPublico(userId) {
     card.appendChild(data);
     lista.appendChild(card);
   });
+}
+
+let usuarioChatAtual = null;
+let nomeUsuarioChatAtual = '';
+
+async function abrirChatPrivado(userId, nome) {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    abrirLogin();
+    return;
+  }
+
+  if (user.id === userId) {
+    alert('Você não pode conversar consigo mesmo!');
+    return;
+  }
+
+  usuarioChatAtual = userId;
+  nomeUsuarioChatAtual = nome;
+
+  document.getElementById('nomeContatoChat').textContent = nome;
+  document.getElementById('textoMensagemChat').value = '';
+  document.getElementById('avisoChat').textContent = '';
+
+  mostrarSecao('chatPrivado');
+
+  await carregarMensagensChat();
+  iniciarAtualizacaoChat();
+}
+
+function voltarPerfilPublico() {
+  pararAtualizacaoChat();
+
+  if (usuarioChatAtual) {
+    abrirPerfilPublico(usuarioChatAtual);
+  }
+}
+
+async function carregarMensagensChat() {
+  const area = document.getElementById('mensagensChat');
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user || !usuarioChatAtual) return;
+
+  const { data: mensagens, error } = await supabaseClient
+    .from('messages')
+    .select('*')
+    .or(
+      `and(sender_id.eq.${user.id},receiver_id.eq.${usuarioChatAtual}),and(sender_id.eq.${usuarioChatAtual},receiver_id.eq.${user.id})`
+    )
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error(error);
+    area.textContent = 'Não foi possível carregar as mensagens.';
+    return;
+  }
+
+  area.innerHTML = '';
+
+  if (!mensagens || mensagens.length === 0) {
+    area.innerHTML = '<p style="color:#a3a696;text-align:center">Ainda não há mensagens. Envie a primeira!</p>';
+    return;
+  }
+
+  mensagens.forEach(mensagem => {
+    const minha = mensagem.sender_id === user.id;
+
+    const bolha = document.createElement('div');
+    bolha.style.maxWidth = '80%';
+    bolha.style.width = 'fit-content';
+    bolha.style.padding = '10px 13px';
+    bolha.style.margin = '8px 0';
+    bolha.style.borderRadius = '12px';
+    bolha.style.background = minha ? '#41451c' : '#292921';
+    bolha.style.color = '#f5f5ed';
+    bolha.style.marginLeft = minha ? 'auto' : '0';
+
+    const texto = document.createElement('p');
+    texto.textContent = mensagem.content;
+
+    const hora = document.createElement('small');
+    hora.textContent = new Date(mensagem.created_at).toLocaleString('pt-BR');
+    hora.style.display = 'block';
+    hora.style.color = '#c1c1b5';
+    hora.style.fontSize = '10px';
+    hora.style.marginTop = '5px';
+
+    bolha.append(texto, hora);
+    area.appendChild(bolha);
+  });
+
+  area.scrollTop = area.scrollHeight;
+}
+
+async function enviarMensagemChat() {
+  const campo = document.getElementById('textoMensagemChat');
+  const aviso = document.getElementById('avisoChat');
+  const conteudo = campo.value.trim();
+
+  if (!conteudo) {
+    aviso.textContent = 'Digite uma mensagem primeiro.';
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user || !usuarioChatAtual) {
+    aviso.textContent = 'Não foi possível identificar a conversa.';
+    return;
+  }
+
+  const botao = document.querySelector('#chatPrivado button[onclick="enviarMensagemChat()"]');
+
+  botao.disabled = true;
+  aviso.textContent = 'Enviando mensagem...';
+
+  const { error } = await supabaseClient
+    .from('messages')
+    .insert({
+      sender_id: user.id,
+      receiver_id: usuarioChatAtual,
+      content: conteudo
+    });
+
+  botao.disabled = false;
+
+  if (error) {
+    console.error(error);
+    aviso.textContent = 'Erro ao enviar: ' + error.message;
+    return;
+  }
+
+  campo.value = '';
+  aviso.textContent = '';
+  await carregarMensagensChat();
+}
+
+let atualizacaoChat = null;
+
+function iniciarAtualizacaoChat() {
+  if (atualizacaoChat) {
+    clearInterval(atualizacaoChat);
+  }
+
+  atualizacaoChat = setInterval(() => {
+    if (
+      document.getElementById('chatPrivado').style.display !== 'none' &&
+      usuarioChatAtual
+    ) {
+      carregarMensagensChat();
+    }
+  }, 3000);
+}
+
+function pararAtualizacaoChat() {
+  if (atualizacaoChat) {
+    clearInterval(atualizacaoChat);
+    atualizacaoChat = null;
+  }
 }
 
   
