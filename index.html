@@ -1878,6 +1878,7 @@ async function publicarVideo() {
 
 async function carregarVideos() {
   const lista = document.getElementById('lista-videos');
+  if (!lista) return;
 
   const { data: videos, error } = await supabaseClient
     .from('videos')
