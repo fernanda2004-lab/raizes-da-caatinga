@@ -1328,7 +1328,8 @@ window.supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
-
+const supabaseClient = window.supabaseClient;
+  
 console.log('Supabase conectado!');
   async function publicar() {
   const texto = document.getElementById('texto');
