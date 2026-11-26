@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-mail confirmado | Raízes da Caatinga</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #090a08;
+      font-family: Arial, sans-serif;
+      color: #f5f5ed;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 430px;
+      padding: 40px 25px;
+      text-align: center;
+      background: #141610;
+      border: 1px solid #292d20;
+      border-radius: 20px;
+    }
+
+    .icone {
+      font-size: 55px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: #f5c518;
+      font-size: 27px;
+      margin-bottom: 15px;
+    }
+
+    p {
+      color: #a3a696;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 25px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #f5c518;
+      color: #090a08;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .marca {
+      margin-top: 25px;
+      color: #777b6b;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="icone" id="icone">🌱</div>
+
+    <h1 id="titulo">Confirmando seu e-mail...</h1>
+
+    <p id="mensagem">
+      Aguarde enquanto verificamos seu endereço de e-mail.
+    </p>
+
+    <button id="botao" style="display:none"
+      onclick="window.location.href='https://fernanda2004-lab.github.io/raizes-da-caatinga/'">
+      Voltar ao aplicativo
+    </button>
+
+    <div class="marca">🌿 Raízes da Caatinga</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const supabaseClient = window.supabase.createClient(
+      'https://olkuxqbqiuliekfprtuo.supabase.co',
+      'sb_publishable_cSXN_29Ff0t1EciP2Sr7yA_bjDKRSxP'
+    );
+
+    async function confirmarEmail() {
+      const titulo = document.getElementById('titulo');
+      const mensagem = document.getElementById('mensagem');
+      const icone = document.getElementById('icone');
+      const botao = document.getElementById('botao');
+
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get('code');
+
+        let resultado;
+
+        if (code) {
+          resultado = await supabaseClient.auth.exchangeCodeForSession(code);
+        } else {
+          const parametros = new URLSearchParams(
+            window.location.hash.substring(1)
+          );
+
+          const access_token = parametros.get('access_token');
+          const refresh_token = parametros.get('refresh_token');
+
+          if (!access_token || !refresh_token) {
+            throw new Error('Link inválido ou expirado.');
+          }
+
+          resultado = await supabaseClient.auth.setSession({
+            access_token,
+            refresh_token
+          });
+        }
+
+        if (resultado.error) {
+          throw resultado.error;
+        }
+
+        await supabaseClient.auth.signOut();
+
+        icone.textContent = '✅';
+        titulo.textContent = 'E-mail confirmado!';
+        mensagem.textContent =
+          'Seu e-mail foi confirmado com sucesso! Agora volte ao aplicativo e faça login com sua conta.';
+        botao.style.display = 'block';
+
+      } catch (erro) {
+        icone.textContent = '⚠️';
+        titulo.textContent = 'Não foi possível confirmar';
+        mensagem.textContent =
+          'O link pode estar expirado ou já ter sido utilizado. Tente solicitar um novo e-mail de confirmação.';
+      }
+    }
+
+    confirmarEmail();
+  </script>
+
+</body>
+</html>
