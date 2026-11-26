@@ -1056,6 +1056,80 @@ header nav,
     </p>
   </div>
 
+<div style="background:#1c2017;border:1px solid #292921;border-radius:12px;padding:18px;margin-top:20px">
+
+  <h3 style="color:#f5c518;margin-bottom:15px">
+    🐝 Cadastrar meu meliponário
+  </h3>
+
+  <p style="color:#a3a696;font-size:13px;margin-bottom:15px">
+    Preencha os dados e escolha a localização clicando no mapa.
+  </p>
+
+  <input id="novoMeliponarioNome" type="text" placeholder="Nome do meliponário"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
+
+  <input id="novoMeliponarioCidade" type="text" placeholder="Cidade"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
+
+  <select id="novoMeliponarioEstado"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
+    <option value="">Selecione o estado</option>
+    <option value="AC">Acre</option>
+    <option value="AL">Alagoas</option>
+    <option value="AP">Amapá</option>
+    <option value="AM">Amazonas</option>
+    <option value="BA">Bahia</option>
+    <option value="CE">Ceará</option>
+    <option value="DF">Distrito Federal</option>
+    <option value="ES">Espírito Santo</option>
+    <option value="GO">Goiás</option>
+    <option value="MA">Maranhão</option>
+    <option value="MT">Mato Grosso</option>
+    <option value="MS">Mato Grosso do Sul</option>
+    <option value="MG">Minas Gerais</option>
+    <option value="PA">Pará</option>
+    <option value="PB">Paraíba</option>
+    <option value="PR">Paraná</option>
+    <option value="PE">Pernambuco</option>
+    <option value="PI">Piauí</option>
+    <option value="RJ">Rio de Janeiro</option>
+    <option value="RN">Rio Grande do Norte</option>
+    <option value="RS">Rio Grande do Sul</option>
+    <option value="RO">Rondônia</option>
+    <option value="RR">Roraima</option>
+    <option value="SC">Santa Catarina</option>
+    <option value="SP">São Paulo</option>
+    <option value="SE">Sergipe</option>
+    <option value="TO">Tocantins</option>
+  </select>
+
+  <input id="novoMeliponarioEspecies" type="text"
+    placeholder="Espécies (ex.: Jataí, Mandaçaia)"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
+
+  <input id="novoMeliponarioColonias" type="number" min="0"
+    placeholder="Quantidade de colônias"
+    style="width:100%;padding:12px;margin-bottom:10px;border-radius:8px">
+
+  <p id="localizacaoMeliponario"
+    style="color:#f5c518;font-size:13px;margin:10px 0">
+    📍 Nenhuma localização selecionada. Clique no mapa.
+  </p>
+
+  <input type="hidden" id="novoMeliponarioLatitude">
+  <input type="hidden" id="novoMeliponarioLongitude">
+
+  <button onclick="cadastrarMeliponario()" class="header-button"
+    style="width:100%;padding:13px">
+    🐝 Cadastrar no mapa
+  </button>
+
+  <p id="mensagemCadastroMeliponario"
+    style="color:#f5c518;font-size:13px;margin-top:12px"></p>
+
+</div>
+
   <div id="mapaMeliponarios"
     style="width:100%;height:450px;border-radius:12px;border:1px solid #292921;background:#1c2017;z-index:1">
   </div>
@@ -3583,6 +3657,18 @@ async function iniciarMapaMeliponarios() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(mapaMeliponarios);
+
+mapaMeliponarios.on('click', function(event) {
+  const latitude = event.latlng.lat;
+  const longitude = event.latlng.lng;
+
+  document.getElementById('novoMeliponarioLatitude').value = latitude;
+  document.getElementById('novoMeliponarioLongitude').value = longitude;
+
+  document.getElementById('localizacaoMeliponario').textContent =
+    '📍 Localização selecionada: ' +
+    latitude.toFixed(5) + ', ' + longitude.toFixed(5);
+});
   }
 
   setTimeout(() => mapaMeliponarios.invalidateSize(), 200);
@@ -3671,6 +3757,77 @@ async function iniciarMapaMeliponarios() {
   });
 
   mensagem.textContent = data.length + ' meliponário(s) encontrado(s).';
+}
+
+async function cadastrarMeliponario() {
+  const mensagem = document.getElementById('mensagemCadastroMeliponario');
+
+  const nome = document.getElementById('novoMeliponarioNome').value.trim();
+  const cidade = document.getElementById('novoMeliponarioCidade').value.trim();
+  const estado = document.getElementById('novoMeliponarioEstado').value;
+  const especiesTexto = document.getElementById('novoMeliponarioEspecies').value.trim();
+  const coloniasTexto = document.getElementById('novoMeliponarioColonias').value;
+  const latitude = document.getElementById('novoMeliponarioLatitude').value;
+  const longitude = document.getElementById('novoMeliponarioLongitude').value;
+
+  if (!nome || !cidade || !estado || !latitude || !longitude) {
+    mensagem.textContent = 'Preencha os dados e selecione um local no mapa.';
+    return;
+  }
+
+  const { data: { user }, error: erroLogin } =
+    await supabaseClient.auth.getUser();
+
+  if (erroLogin || !user) {
+    mensagem.textContent = 'Entre na sua conta para cadastrar.';
+    abrirLogin();
+    return;
+  }
+
+  const quantidade = coloniasTexto === '' ? null : Number(coloniasTexto);
+
+  if (quantidade !== null && (!Number.isInteger(quantidade) || quantidade < 0)) {
+    mensagem.textContent = 'Informe uma quantidade válida de colônias.';
+    return;
+  }
+
+  mensagem.textContent = 'Salvando meliponário...';
+
+  const { error } = await supabaseClient
+    .from('meliponarios')
+    .insert({
+      user_id: user.id,
+      nome: nome,
+      cidade: cidade,
+      estado: estado,
+      especies: especiesTexto
+        ? especiesTexto.split(',').map(especie => especie.trim()).filter(Boolean)
+        : [],
+      quantidade_colonias: quantidade,
+      latitude: Number(latitude),
+      longitude: Number(longitude)
+    });
+
+  if (error) {
+    console.error(error);
+    mensagem.textContent = 'Não foi possível salvar. Verifique os dados e tente novamente.';
+    return;
+  }
+
+  mensagem.textContent = '🐝 Meliponário cadastrado com sucesso!';
+
+  document.getElementById('novoMeliponarioNome').value = '';
+  document.getElementById('novoMeliponarioCidade').value = '';
+  document.getElementById('novoMeliponarioEstado').value = '';
+  document.getElementById('novoMeliponarioEspecies').value = '';
+  document.getElementById('novoMeliponarioColonias').value = '';
+  document.getElementById('novoMeliponarioLatitude').value = '';
+  document.getElementById('novoMeliponarioLongitude').value = '';
+
+  document.getElementById('localizacaoMeliponario').textContent =
+    '📍 Nenhuma localização selecionada. Clique no mapa.';
+
+  await iniciarMapaMeliponarios();
 }
 </script>
 </body>
