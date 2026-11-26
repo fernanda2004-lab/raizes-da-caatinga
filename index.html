@@ -1374,6 +1374,8 @@ console.log('Supabase conectado!');
 async function carregarPosts() {
   const lista = document.getElementById('novas-publicacoes');
 
+  if (!lista) return;
+
   const { data: posts, error } = await supabaseClient
     .from('posts')
     .select('*')
