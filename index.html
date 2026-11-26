@@ -2290,14 +2290,32 @@ async function enviarFotoPerfil() {
   
 supabaseClient.auth.onAuthStateChange((event, session) => {
   const nomePerfil = document.getElementById('nomePerfil');
-  if (!nomePerfil) return;
-
   const user = session?.user;
-  nomePerfil.textContent = user
-    ? (user.user_metadata?.full_name || user.email)
-    : 'Visitante';
-});
 
+  if (nomePerfil) {
+    nomePerfil.textContent = user
+      ? (user.user_metadata?.full_name || user.email)
+      : 'Visitante';
+  }
+
+  setTimeout(() => {
+    if (typeof atualizarPerfil === 'function') {
+      atualizarPerfil();
+    }
+
+    if (typeof carregarPosts === 'function') {
+      carregarPosts();
+    }
+
+    if (typeof carregarVideos === 'function') {
+      carregarVideos();
+    }
+
+    if (typeof carregarArtigos === 'function') {
+      carregarArtigos();
+    }
+  }, 0);
+});
 atualizarPerfil();
 
 async function sairDaConta() {
